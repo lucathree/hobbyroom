@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/python:3.13.5-slim-bookworm AS builder
+FROM python:3.13.5-slim-bookworm AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
