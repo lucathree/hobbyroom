@@ -1,4 +1,4 @@
 import sqlalchemy
-from settings import settings
+from hobbyroom.settings import settings
 
 postgres_db = sqlalchemy.create_engine(settings.db_url)
