@@ -5,6 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "bcrypt>=4.3.0",
+    "dependency-injector>=4.48.1",
+    "email-validator>=2.2.0",
     "fastapi[standard]>=0.115.14,<0.116.0",
     "pendulum>=3.1.0",
     "pre-commit>=4.2.0,<5.0.0",
@@ -14,3 +17,9 @@ dependencies = [
     "sqlalchemy>=2.0.41",
     "uuid6>=2025.0.1",
 ]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
