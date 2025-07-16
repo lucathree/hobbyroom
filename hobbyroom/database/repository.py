@@ -1,6 +1,8 @@
-from typing import ClassVar, Generic, TypeVar
+from typing import ClassVar, Generic, TypeVar, get_args
+
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+
 from hobbyroom.database import model
 
 EntityType = TypeVar("EntityType", bound=BaseModel)
@@ -19,3 +21,8 @@ class SQLAlchemyRepository(Generic[EntityType]):
     def add(self, entity: EntityType) -> None:
         model_obj = self.__model_cls__.parse_obj(entity)
         self.session.add(model_obj)
+
+    def find_by(self, **kwargs) -> EntityType | None:
+        entity_type: EntityType = get_args(self.__class__.__orig_bases__[0])[0]
+        obj = self.session.query(self.__model_cls__).filter_by(**kwargs).first()
+        return obj and entity_type.model_validate(obj.to_dict())
