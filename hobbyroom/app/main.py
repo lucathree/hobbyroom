@@ -19,6 +19,7 @@ def create_app() -> FastAPI:
     )
     inject_dependencies(_app)
     add_routers(_app)
+    add_docs_routes(_app)
 
     model.Base.metadata.create_all(bind=postgres_db)
 
