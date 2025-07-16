@@ -3,7 +3,7 @@ import http
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Response
 
-from hobbyroom import constants
+from hobbyroom import constants, exceptions
 from hobbyroom.container import Container
 from hobbyroom.user import command, service
 
@@ -15,6 +15,7 @@ router = APIRouter()
     status_code=http.HTTPStatus.CREATED,
     tags=[constants.OpenApiTag.USER],
     summary="사용자 계정 생성",
+    responses=exceptions.get_responses(http.HTTPStatus.UNPROCESSABLE_ENTITY),
 )
 @inject
 async def create_user(
