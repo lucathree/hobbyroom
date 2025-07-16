@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr
 import bcrypt
+from pydantic import BaseModel, EmailStr
 
 
 class CreateUser(BaseModel):
@@ -11,3 +11,8 @@ class CreateUser(BaseModel):
         return bcrypt.hashpw(
             password=self.password.encode(), salt=bcrypt.gensalt()
         ).decode()
+
+
+class AuthorizeUser(BaseModel):
+    email: EmailStr
+    password: str
