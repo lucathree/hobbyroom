@@ -1,7 +1,11 @@
 import http
+
 from fastapi import FastAPI, Response
+
+from hobbyroom.container import Container
 from hobbyroom.database import model
 from hobbyroom.database.connection import postgres_db
+from hobbyroom.user.entrypoint import router as user_router
 
 
 def create_app() -> FastAPI:
@@ -9,6 +13,8 @@ def create_app() -> FastAPI:
         title="Hobbyroom API",
         description="취미모임 프로젝트 API 서버",
     )
+    inject_dependencies(_app)
+    add_routers(_app)
 
     model.Base.metadata.create_all(bind=postgres_db)
 
@@ -17,6 +23,15 @@ def create_app() -> FastAPI:
     )
 
     return _app
+
+
+def inject_dependencies(_app: FastAPI) -> None:
+    container = Container()
+    _app.container = container
+
+
+def add_routers(_app: FastAPI) -> None:
+    _app.include_router(user_router)
 
 
 app = create_app()
