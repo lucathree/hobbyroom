@@ -1,8 +1,12 @@
 from collections.abc import Callable
 from uuid import UUID
 
+import bcrypt
 import pendulum
-from hobbyroom.user import command, adapter, domain
+
+from hobbyroom import exceptions
+from hobbyroom.user import adapter, command, domain, schema
+from hobbyroom.user.service import issuer
 
 
 class CreateUserHandler:
@@ -26,3 +30,30 @@ class CreateUserHandler:
         with self.user_unit_of_work as uow:
             uow.user.add(user)
             uow.commit()
+
+
+class AuthorizeUserHandler:
+    def __init__(
+        self,
+        user_unit_of_work: adapter.UserUnitOfWork,
+        jwt_issuer: issuer.JWTIssuer,
+    ):
+        self.user_unit_of_work = user_unit_of_work
+        self.jwt_issuer = jwt_issuer
+
+    def handle(self, cmd: command.AuthorizeUser) -> schema.UserToken:
+        with self.user_unit_of_work as uow:
+            user = uow.user.find_by_email(cmd.email)
+        if not user:
+            raise exceptions.NotFoundError("User not found")
+        self._validate_password(password=cmd.password, hashed_password=user.password)
+        token = self.jwt_issuer.create_token(user_email=user.email)
+        return schema.UserToken(token=token)
+
+    def _validate_password(self, password: str, hashed_password: str) -> None:
+        is_valid = bcrypt.checkpw(
+            password=password.encode(),
+            hashed_password=hashed_password.encode(),
+        )
+        if not is_valid:
+            raise exceptions.UnauthorizedError("Invalid password")
