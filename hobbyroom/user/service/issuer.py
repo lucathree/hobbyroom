@@ -18,9 +18,11 @@ class JWTIssuer:
         self.expiration_timedelta = expiration_timedelta
 
     def create_token(self, user_email: str) -> str:
+        current_time = self.clock()
         payload = {
             "sub": user_email,
-            "exp": self.clock() + self.expiration_timedelta,
+            "iat": int(current_time.timestamp()),
+            "exp": int((current_time + self.expiration_timedelta).timestamp()),
         }
         return jwt.encode(
             payload=payload,
