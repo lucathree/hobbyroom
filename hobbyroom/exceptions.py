@@ -3,11 +3,19 @@ from collections.abc import Awaitable, Callable
 from typing import ClassVar
 
 from fastapi import Request, Response
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 type ExceptionHandler[E: Exception] = Callable[
     [Request, E], Response | Awaitable[Response]
 ]
+
+
+class ErrorSchema(BaseModel):
+    type: str
+    message: str
+    detail: str | None = None
 
 
 class ApplicationError(Exception):
@@ -28,19 +36,21 @@ class ApplicationError(Exception):
         return self.message
 
     @property
-    def error_schema(self) -> dict[str, str]:
-        return {
-            "type": self.__class__.__name__,
-            "message": self.message,
-            "detail": self.detail,
-        }
+    def error_schema(self) -> ErrorSchema:
+        return ErrorSchema(
+            type=self.__class__.__name__,
+            message=self.message,
+            detail=self.detail,
+        )
 
     @classmethod
     def create_exception_handler(cls) -> ExceptionHandler:
         async def exception_handler(
             request: Request, exc: ApplicationError
         ) -> JSONResponse:
-            return JSONResponse(status_code=cls.status_code, content=exc.error_schema)
+            return JSONResponse(
+                status_code=cls.status_code, content=jsonable_encoder(exc.error_schema)
+            )
 
         return exception_handler
 
@@ -71,3 +81,14 @@ APPLICATION_EXCEPTIONS: list[type[ApplicationError]] = [
     UnauthorizedError,
     NotAllowedError,
 ]
+
+
+def get_responses(*http_statuses: http.HTTPStatus) -> dict[int, dict[str, str]]:
+    """Utility function to create response schemas for FastAPI endpoints."""
+    return {
+        status.value: {
+            "model": ErrorSchema,
+            "description": status.phrase,
+        }
+        for status in http_statuses
+    }
