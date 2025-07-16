@@ -17,3 +17,9 @@ dependencies = [
     "sqlalchemy>=2.0.41",
     "uuid6>=2025.0.1",
 ]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
