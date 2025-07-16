@@ -5,6 +5,7 @@ from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse
 
+from hobbyroom import exceptions
 from hobbyroom.container import Container
 from hobbyroom.database import model
 from hobbyroom.database.connection import postgres_db
@@ -20,6 +21,7 @@ def create_app() -> FastAPI:
     inject_dependencies(_app)
     add_routers(_app)
     add_docs_routes(_app)
+    add_custom_exception_handlers(_app)
 
     model.Base.metadata.create_all(bind=postgres_db)
 
@@ -37,6 +39,14 @@ def inject_dependencies(_app: FastAPI) -> None:
 
 def add_routers(_app: FastAPI) -> None:
     _app.include_router(user_router)
+
+
+def add_custom_exception_handlers(_app: FastAPI) -> None:
+    for exc in exceptions.APPLICATION_EXCEPTIONS:
+        _app.add_exception_handler(
+            exc_class_or_status_code=exc,
+            handler=exc.create_exception_handler(),
+        )
 
 
 def add_docs_routes(_app: FastAPI) -> None:
