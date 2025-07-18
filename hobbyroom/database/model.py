@@ -42,3 +42,16 @@ class User(Base):
         default=lambda: pendulum.now("UTC")
     )
     updated_at: Mapped[datetime.datetime] = mapped_column(default=created_at)
+
+    personas: Mapped[list["Persona"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+class Persona(Base):
+    __tablename__ = "persona"
+
+    name: Mapped[str] = mapped_column(nullable=False)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+
+    user: Mapped["User"] = relationship("User", back_populates="personas")
