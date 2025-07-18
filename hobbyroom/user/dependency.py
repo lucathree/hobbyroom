@@ -31,7 +31,6 @@ class ServiceContainer(containers.DeclarativeContainer):
         secret_key=settings.jwt_secret_key,
         algorithm=settings.jwt_algorithm,
         clock=clock,
-        expiration_timedelta=settings.jwt_expiration_timedelta,
     )
     authorize_user_handler = providers.Factory(
         service.AuthorizeUserHandler,
