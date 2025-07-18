@@ -26,8 +26,8 @@ class ServiceContainer(containers.DeclarativeContainer):
         id_generator=id_generator,
         clock=clock,
     )
-    jwt_issuer = providers.Factory(
-        service.JWTIssuer,
+    jwt_handler = providers.Factory(
+        service.JWTHandler,
         secret_key=settings.jwt_secret_key,
         algorithm=settings.jwt_algorithm,
         clock=clock,
@@ -35,7 +35,7 @@ class ServiceContainer(containers.DeclarativeContainer):
     authorize_user_handler = providers.Factory(
         service.AuthorizeUserHandler,
         user_unit_of_work=adapter.user_unit_of_work,
-        jwt_issuer=jwt_issuer,
+        jwt_handler=jwt_handler,
     )
 
 
