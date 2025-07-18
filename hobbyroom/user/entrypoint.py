@@ -3,9 +3,9 @@ import http
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Response
 
-from hobbyroom import constants, exceptions
+from hobbyroom import auth, constants, exceptions
 from hobbyroom.container import Container
-from hobbyroom.user import command, schema, service
+from hobbyroom.user import command, domain, schema, service
 
 router = APIRouter()
 
@@ -48,3 +48,21 @@ async def authorize_user(
     ),
 ):
     return handler.handle(cmd)
+
+
+@router.get(
+    "/v1/users/me",
+    response_model=schema.UserInfo,
+    status_code=http.HTTPStatus.OK,
+    tags=[constants.OpenApiTag.USER],
+    summary="현 사용자 정보 확인",
+    description="현재 API에 요청을 보내는 사용자의 정보를 반환합니다.",
+    responses=exceptions.get_responses(
+        http.HTTPStatus.UNAUTHORIZED,
+    ),
+)
+@inject
+async def get_user_info(
+    user: domain.User = Depends(auth.get_current_user),
+) -> schema.UserInfo:
+    return schema.UserInfo(email=user.email)
