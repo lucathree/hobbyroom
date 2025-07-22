@@ -7,8 +7,6 @@ from fastapi.responses import HTMLResponse
 
 from hobbyroom import exceptions
 from hobbyroom.container import Container
-from hobbyroom.database import model
-from hobbyroom.database.connection import postgres_db
 from hobbyroom.user.entrypoint import router as user_router
 
 
@@ -22,8 +20,6 @@ def create_app() -> FastAPI:
     add_routers(_app)
     add_docs_routes(_app)
     add_custom_exception_handlers(_app)
-
-    model.Base.metadata.create_all(bind=postgres_db)
 
     _app.get("/health-check", include_in_schema=False)(
         lambda: Response(status_code=http.HTTPStatus.OK)
