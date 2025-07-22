@@ -61,8 +61,31 @@ async def authorize_user(
         http.HTTPStatus.UNAUTHORIZED,
     ),
 )
-@inject
 async def get_user_info(
     user: domain.User = Depends(auth.get_current_user),
 ) -> schema.UserInfo:
     return schema.UserInfo(email=user.email)
+
+
+@router.post(
+    "/v1/personas",
+    status_code=http.HTTPStatus.CREATED,
+    tags=[constants.OpenApiTag.USER],
+    summary="사용자 페르소나 생성",
+    description="그룹 활동에 사용할 사용자 페르소나를 생성합니다.",
+    responses=exceptions.get_responses(
+        http.HTTPStatus.UNPROCESSABLE_ENTITY,
+        http.HTTPStatus.UNAUTHORIZED,
+    ),
+)
+@inject
+async def create_persona(
+    cmd: command.CreatePersona,
+    user: domain.User = Depends(auth.get_current_user),
+    handler: service.CreatePersonaHandler = Depends(
+        Provide[Container.user.service.create_persona_handler]
+    ),
+):
+    cmd.user_id = user.id
+    handler.handle(cmd)
+    return Response(status_code=http.HTTPStatus.CREATED)
