@@ -8,10 +8,12 @@ class AdapterContainer(containers.DeclarativeContainer):
     session_factory = providers.Dependency()
 
     user_repo_factory = providers.Factory(lambda: adapter.UserRepository)
+    persona_repo_factory = providers.Factory(lambda: adapter.PersonaRepository)
     user_unit_of_work = providers.Factory(
         adapter.UserUnitOfWork,
         session_factory=session_factory,
         user_repo_factory=user_repo_factory,
+        persona_repo_factory=persona_repo_factory,
     )
 
 
@@ -36,6 +38,12 @@ class ServiceContainer(containers.DeclarativeContainer):
         service.AuthorizeUserHandler,
         user_unit_of_work=adapter.user_unit_of_work,
         jwt_handler=jwt_handler,
+    )
+    create_persona_handler = providers.Factory(
+        service.CreatePersonaHandler,
+        user_unit_of_work=adapter.user_unit_of_work,
+        id_generator=id_generator,
+        clock=clock,
     )
 
 
