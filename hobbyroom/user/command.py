@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import bcrypt
 from pydantic import BaseModel, EmailStr
 
@@ -16,3 +18,8 @@ class CreateUser(BaseModel):
 class AuthorizeUser(BaseModel):
     email: EmailStr
     password: str
+
+
+class CreatePersona(BaseModel):
+    name: str
+    user_id: UUID | None = None
