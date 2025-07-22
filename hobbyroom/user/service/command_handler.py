@@ -6,7 +6,7 @@ import pendulum
 
 from hobbyroom import exceptions
 from hobbyroom.user import adapter, command, domain, schema
-from hobbyroom.user.service import issuer
+from hobbyroom.user.service import jwt_handler
 
 
 class CreateUserHandler:
@@ -36,10 +36,10 @@ class AuthorizeUserHandler:
     def __init__(
         self,
         user_unit_of_work: adapter.UserUnitOfWork,
-        jwt_issuer: issuer.JWTIssuer,
+        jwt_handler: jwt_handler.JWTHandler,
     ):
         self.user_unit_of_work = user_unit_of_work
-        self.jwt_issuer = jwt_issuer
+        self.jwt_handler = jwt_handler
 
     def handle(self, cmd: command.AuthorizeUser) -> schema.UserToken:
         with self.user_unit_of_work as uow:
@@ -47,7 +47,7 @@ class AuthorizeUserHandler:
         if not user:
             raise exceptions.NotFoundError("User not found")
         self._validate_password(password=cmd.password, hashed_password=user.password)
-        token = self.jwt_issuer.create_token(user_email=user.email)
+        token = self.jwt_handler.issue(user_email=user.email)
         return schema.UserToken(token=token)
 
     def _validate_password(self, password: str, hashed_password: str) -> None:
@@ -57,3 +57,26 @@ class AuthorizeUserHandler:
         )
         if not is_valid:
             raise exceptions.UnauthorizedError("Invalid password")
+
+
+class CreatePersonaHandler:
+    def __init__(
+        self,
+        user_unit_of_work: adapter.UserUnitOfWork,
+        id_generator: Callable[..., UUID],
+        clock: Callable[..., pendulum.DateTime],
+    ):
+        self.user_unit_of_work = user_unit_of_work
+        self.id_generator = id_generator
+        self.clock = clock
+
+    def handle(self, cmd: command.CreatePersona) -> None:
+        persona = domain.Persona.create(
+            id=self.id_generator(),
+            name=cmd.name,
+            user_id=cmd.user_id,
+            created_at=self.clock(),
+        )
+        with self.user_unit_of_work as uow:
+            uow.persona.add(persona)
+            uow.commit()
