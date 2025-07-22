@@ -53,5 +53,9 @@ class Persona(Base):
 
     name: Mapped[str] = mapped_column(nullable=False)
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=lambda: pendulum.now("UTC")
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(default=created_at)
 
     user: Mapped["User"] = relationship("User", back_populates="personas")
