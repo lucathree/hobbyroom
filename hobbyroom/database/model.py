@@ -59,3 +59,37 @@ class Persona(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(default=created_at)
 
     user: Mapped["User"] = relationship("User", back_populates="personas")
+    affiliations: Mapped[list["Affiliation"]] = relationship(
+        back_populates="persona", cascade="all, delete-orphan"
+    )
+
+
+class Gathering(Base):
+    __tablename__ = "gathering"
+
+    name: Mapped[str] = mapped_column(nullable=False)
+    description: Mapped[str]
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=lambda: pendulum.now("UTC")
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(default=created_at)
+
+    affiliations: Mapped[list["Affiliation"]] = relationship(
+        back_populates="gathering", cascade="all, delete-orphan"
+    )
+
+
+class Affiliation(Base):
+    __tablename__ = "affiliation"
+
+    persona_id: Mapped[UUID] = mapped_column(ForeignKey("persona.id"), primary_key=True)
+    gathering_id: Mapped[UUID] = mapped_column(
+        ForeignKey("gathering.id"), primary_key=True
+    )
+    is_leader: Mapped[bool] = mapped_column(default=False)
+    joined_at: Mapped[datetime.datetime] = mapped_column(
+        default=lambda: pendulum.now("UTC")
+    )
+
+    persona: Mapped["Persona"] = relationship(back_populates="affiliations")
+    gathering: Mapped["Gathering"] = relationship(back_populates="affiliations")
