@@ -64,7 +64,7 @@ async def authorize_user(
 async def get_user_info(
     user: domain.User = Depends(auth.get_current_user),
 ) -> schema.UserInfo:
-    return schema.UserInfo(email=user.email)
+    return schema.UserInfo.from_domain(user)
 
 
 @router.post(

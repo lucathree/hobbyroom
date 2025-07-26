@@ -34,8 +34,10 @@ class JWTHandler:
             decoded = jwt.decode(
                 jwt=token.encode(), key=self.secret_key, algorithms=[self.algorithm]
             )
-        except jwt.exceptions.InvalidSignatureError:
-            raise exceptions.UnauthorizedError("인증 토큰이 올바르지 않습니다.")
+        except jwt.exceptions.InvalidTokenError:
+            raise exceptions.UnauthorizedError(
+                "인증 토큰이 만료되었거나 올바르지 않습니다."
+            )
 
         payload = domain.JWTPayload.model_validate(decoded)
         if payload.is_expired(current_time=self.clock()):

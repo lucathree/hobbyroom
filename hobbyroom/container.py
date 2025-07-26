@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from uuid6 import uuid7
 
 from hobbyroom.database.connection import postgres_db
+from hobbyroom.gathering.dependency import GatheringContainer
 from hobbyroom.user.dependency import UserContainer
 
 
@@ -12,6 +13,7 @@ class Container(containers.DeclarativeContainer):
         modules=[
             ".auth",
             ".user.entrypoint",
+            ".gathering.entrypoint",
         ]
     )
 
@@ -23,6 +25,12 @@ class Container(containers.DeclarativeContainer):
     id_generator = providers.Factory(lambda: uuid7)
     clock = providers.Factory(lambda: (lambda: pendulum.now("UTC")))
 
+    gathering = providers.Container(
+        GatheringContainer,
+        session_factory=db_session_factory,
+        id_generator=id_generator,
+        clock=clock,
+    )
     user = providers.Container(
         UserContainer,
         session_factory=db_session_factory,
