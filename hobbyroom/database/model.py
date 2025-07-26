@@ -44,7 +44,7 @@ class User(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(default=created_at)
 
     personas: Mapped[list["Persona"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
+        back_populates="user", cascade="all, delete-orphan", lazy="selectin"
     )
 
 
