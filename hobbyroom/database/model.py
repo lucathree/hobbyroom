@@ -8,8 +8,6 @@ from uuid6 import uuid7
 
 
 class Base(DeclarativeBase):
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
-
     type_annotation_map = {
         UUID: UUID(as_uuid=True),
         datetime.datetime: TIMESTAMP(timezone=True),
@@ -32,31 +30,35 @@ class Base(DeclarativeBase):
         return result
 
 
-class User(Base):
+class IdentifierBase(Base):
+    __abstract__ = True
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+
+
+class TimestampMixin:
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=lambda: pendulum.now("UTC")
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(default=created_at)
+
+
+class User(IdentifierBase, TimestampMixin):
     __tablename__ = "user"
 
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     is_deactivated: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        default=lambda: pendulum.now("UTC")
-    )
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=created_at)
 
     personas: Mapped[list["Persona"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", lazy="selectin"
     )
 
 
-class Persona(Base):
+class Persona(IdentifierBase, TimestampMixin):
     __tablename__ = "persona"
 
     name: Mapped[str] = mapped_column(nullable=False)
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        default=lambda: pendulum.now("UTC")
-    )
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=created_at)
 
     user: Mapped["User"] = relationship("User", back_populates="personas")
     affiliations: Mapped[list["Affiliation"]] = relationship(
@@ -64,15 +66,11 @@ class Persona(Base):
     )
 
 
-class Gathering(Base):
+class Gathering(IdentifierBase, TimestampMixin):
     __tablename__ = "gathering"
 
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str]
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        default=lambda: pendulum.now("UTC")
-    )
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=created_at)
 
     affiliations: Mapped[list["Affiliation"]] = relationship(
         back_populates="gathering", cascade="all, delete-orphan"
