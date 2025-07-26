@@ -13,12 +13,10 @@ class GatheringUnitOfWork(database.BaseUnitOfWork):
         session_factory: sessionmaker,
         gathering_repo_factory: Callable[[Session], repository.GatheringRepository],
         affiliation_repo_factory: Callable[[Session], repository.AffiliationRepository],
-        persona_repo_factory: Callable[[Session], repository.PersonaRepository],
     ):
         super().__init__(session_factory)
         self.gathering_repo_factory = gathering_repo_factory
         self.affiliation_repo_factory = affiliation_repo_factory
-        self.persona_repo_factory = persona_repo_factory
 
     def __enter__(self) -> Self:
         super().__enter__()
