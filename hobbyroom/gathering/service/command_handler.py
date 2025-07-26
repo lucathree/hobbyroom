@@ -24,8 +24,8 @@ class CreateGatheringHandler:
             gathering = domain.Gathering.create(
                 id=gathering_id,
                 name=cmd.name,
-                created_at=creation_time,
                 description=cmd.description,
+                created_at=creation_time,
             )
             affiliation = domain.Affiliation.create_leader(
                 persona_id=cmd.persona_id,

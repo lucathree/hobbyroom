@@ -18,8 +18,8 @@ class Gathering(BaseModel):
         cls,
         id: UUID,
         name: str,
+        description: str,
         created_at: pendulum.DateTime,
-        description: str | None = None,
     ) -> Self:
         return cls(
             id=id,
