@@ -34,3 +34,28 @@ async def create_gathering(
     cmd.validate_persona_id(user)
     handler.handle(cmd)
     return Response(status_code=http.HTTPStatus.CREATED)
+
+
+@router.post(
+    "/v1/gatherings/join",
+    status_code=http.HTTPStatus.CREATED,
+    summary="모임 참여",
+    description="기존 모임에 일원으로 참여하여 소속을 만듭니다.",
+    tags=[constants.OpenApiTag.GATHERING],
+    responses=exceptions.get_responses(
+        http.HTTPStatus.UNPROCESSABLE_ENTITY,
+        http.HTTPStatus.UNAUTHORIZED,
+        http.HTTPStatus.NOT_FOUND,
+    ),
+)
+@inject
+async def join_gathering(
+    cmd: command.JoinGathering,
+    user: user.User = Depends(auth.get_current_user),
+    handler: service.JoinGatheringHandler = Depends(
+        Provide[Container.gathering.service.join_gathering_handler]
+    ),
+):
+    cmd.validate_persona_id(user)
+    handler.handle(cmd)
+    return Response(status_code=http.HTTPStatus.CREATED)

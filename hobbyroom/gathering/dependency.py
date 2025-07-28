@@ -27,6 +27,12 @@ class ServiceContainer(containers.DeclarativeContainer):
         id_generator=id_generator,
         clock=clock,
     )
+    join_gathering_handler = providers.Factory(
+        service.JoinGatheringHandler,
+        gathering_unit_of_work=adapter.gathering_unit_of_work,
+        id_generator=id_generator,
+        clock=clock,
+    )
 
 
 class GatheringContainer(containers.DeclarativeContainer):

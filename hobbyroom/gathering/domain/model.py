@@ -49,3 +49,17 @@ class Affiliation(BaseModel):
             is_leader=True,
             joined_at=joined_at,
         )
+
+    @classmethod
+    def create_member(
+        cls,
+        persona_id: UUID,
+        gathering_id: UUID,
+        joined_at: pendulum.DateTime,
+    ) -> Self:
+        return cls(
+            persona_id=persona_id,
+            gathering_id=gathering_id,
+            is_leader=False,
+            joined_at=joined_at,
+        )

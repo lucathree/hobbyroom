@@ -65,6 +65,11 @@ class DomainValidationError(ApplicationError):
     status_code: ClassVar[int] = http.HTTPStatus.UNPROCESSABLE_ENTITY
 
 
+class DuplicateEntityError(ApplicationError):
+    default_message: ClassVar[str] = "Entity already exists."
+    status_code: ClassVar[int] = http.HTTPStatus.UNPROCESSABLE_ENTITY
+
+
 class UnauthorizedError(ApplicationError):
     default_message: ClassVar[str] = "Unauthorized access."
     status_code: ClassVar[int] = http.HTTPStatus.UNAUTHORIZED
@@ -80,6 +85,7 @@ APPLICATION_EXCEPTIONS: list[type[ApplicationError]] = [
     DomainValidationError,
     UnauthorizedError,
     NotAllowedError,
+    DuplicateEntityError,
 ]
 
 
