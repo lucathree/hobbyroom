@@ -2,7 +2,7 @@ import datetime
 from typing import Any, Self
 
 import pendulum
-from sqlalchemy import TIMESTAMP, UUID, ForeignKey
+from sqlalchemy import TIMESTAMP, UUID, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
@@ -91,3 +91,7 @@ class Affiliation(Base):
 
     persona: Mapped["Persona"] = relationship(back_populates="affiliations")
     gathering: Mapped["Gathering"] = relationship(back_populates="affiliations")
+
+    __table_args__ = (
+        UniqueConstraint("persona_id", "gathering_id", name="uq_persona_gathering"),
+    )
