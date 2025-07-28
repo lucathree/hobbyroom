@@ -2,7 +2,6 @@ from collections.abc import Callable
 from uuid import UUID
 
 import pendulum
-from sqlalchemy.exc import IntegrityError
 
 from hobbyroom import exceptions
 from hobbyroom.gathering import adapter, command, domain
@@ -52,15 +51,17 @@ class JoinGatheringHandler:
 
     def handle(self, cmd: command.JoinGathering) -> None:
         with self.gathering_unit_of_work as uow:
-            affiliation = domain.Affiliation.create_member(
+            affiliation = uow.affiliation.find_by_persona_and_gathering_ids(
+                persona_id=cmd.persona_id, gathering_id=cmd.gathering_id
+            )
+            if affiliation is not None:
+                raise exceptions.DuplicateEntityError(
+                    "이미 해당 모임에 참여하고 있습니다."
+                )
+            entity = domain.Affiliation.create_member(
                 persona_id=cmd.persona_id,
                 gathering_id=cmd.gathering_id,
                 joined_at=self.clock(),
             )
-            try:
-                uow.affiliation.add(affiliation)
-            except IntegrityError:
-                raise exceptions.DuplicateEntityError(
-                    "이미 해당 모임에 참여하고 있습니다."
-                )
+            uow.affiliation.add(entity)
             uow.commit()
