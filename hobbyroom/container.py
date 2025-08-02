@@ -43,4 +43,5 @@ class Container(containers.DeclarativeContainer):
         session_factory=db_session_factory,
         id_generator=id_generator,
         clock=clock,
+        jwt_handler=auth.service.jwt_handler,
     )
