@@ -12,7 +12,7 @@ from hobbyroom.user.dependency import UserContainer
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         modules=[
-            ".auth.depends",
+            ".depends",
             ".user.entrypoint",
             ".gathering.entrypoint",
         ]

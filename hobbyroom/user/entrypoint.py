@@ -3,9 +3,9 @@ import http
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Response
 
-from hobbyroom import auth, constants, exceptions
+from hobbyroom import auth, constants, depends, exceptions
 from hobbyroom.container import Container
-from hobbyroom.user import command, domain, schema, service
+from hobbyroom.user import command, schema, service
 
 router = APIRouter()
 
@@ -62,9 +62,9 @@ async def authorize_user(
     ),
 )
 async def get_user_info(
-    user: domain.User = Depends(auth.get_current_user),
+    user: auth.User = Depends(depends.get_current_user),
 ) -> schema.UserInfo:
-    return schema.UserInfo.from_domain(user)
+    return schema.UserInfo.from_auth_vo(user)
 
 
 @router.post(
@@ -81,7 +81,7 @@ async def get_user_info(
 @inject
 async def create_persona(
     cmd: command.CreatePersona,
-    user: domain.User = Depends(auth.get_current_user),
+    user: auth.User = Depends(depends.get_current_user),
     handler: service.CreatePersonaHandler = Depends(
         Provide[Container.user.service.create_persona_handler]
     ),

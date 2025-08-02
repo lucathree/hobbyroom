@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from dependency_injector.wiring import Provide, inject
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
@@ -11,10 +9,15 @@ from hobbyroom.container import Container
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="/v1/users/auth")
 
 
+@inject
 def get_current_user(
-    token: str,
-    jwt_handler: service.JWTHandler,
-    auth_unit_of_work: adapter.AuthUnitOfWork,
+    token: str = Depends(oauth2_schema),
+    jwt_handler: service.JWTHandler = Depends(
+        Provide[Container.auth.service.jwt_handler]
+    ),
+    auth_unit_of_work: adapter.AuthUnitOfWork = Depends(
+        Provide[Container.auth.adapter.auth_unit_of_work]
+    ),
 ) -> domain.User:
     payload = jwt_handler.decode(token)
 
@@ -25,17 +28,3 @@ def get_current_user(
         raise exceptions.UnauthorizedError("인증 정보가 유효하지 않습니다.")
 
     return user
-
-
-@inject
-def get_current_user_id(
-    token: str = Depends(oauth2_schema),
-    jwt_handler: service.JWTHandler = Depends(
-        Provide[Container.auth.service.jwt_handler]
-    ),
-    auth_unit_of_work: adapter.AuthUnitOfWork = Depends(
-        Provide[Container.auth.adapter.auth_unit_of_work]
-    ),
-) -> UUID:
-    user = get_current_user(token, jwt_handler, auth_unit_of_work)
-    return user.id

@@ -2,8 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from hobbyroom import exceptions
-from hobbyroom import user as user_domain
+from hobbyroom import auth, exceptions
 
 
 class CreateGathering(BaseModel):
@@ -11,7 +10,7 @@ class CreateGathering(BaseModel):
     description: str
     persona_id: UUID
 
-    def validate_persona_id(self, user: user_domain.User) -> None:
+    def validate_persona_id(self, user: auth.User) -> None:
         persona = next(
             (persona for persona in user.personas if persona.id == self.persona_id),
             None,
@@ -26,7 +25,7 @@ class JoinGathering(BaseModel):
     gathering_id: UUID
     persona_id: UUID
 
-    def validate_persona_id(self, user: user_domain.User) -> None:
+    def validate_persona_id(self, user: auth.User) -> None:
         persona = next(
             (persona for persona in user.personas if persona.id == self.persona_id),
             None,
