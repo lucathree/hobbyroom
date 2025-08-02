@@ -2,7 +2,8 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from hobbyroom import exceptions, user
+from hobbyroom import exceptions
+from hobbyroom.auth import adapter, domain, service
 from hobbyroom.container import Container
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="/v1/users/auth")
@@ -11,14 +12,16 @@ oauth2_schema = OAuth2PasswordBearer(tokenUrl="/v1/users/auth")
 @inject
 def get_current_user(
     token: str = Depends(oauth2_schema),
-    jwt_handler: user.JWTHandler = Depends(Provide[Container.user.service.jwt_handler]),
-    user_unit_of_work: user.UserUnitOfWork = Depends(
-        Provide[Container.user.adapter.user_unit_of_work]
+    jwt_handler: service.JWTHandler = Depends(
+        Provide[Container.auth.service.jwt_handler]
     ),
-) -> user.User:
+    auth_unit_of_work: adapter.AuthUnitOfWork = Depends(
+        Provide[Container.auth.adapter.auth_unit_of_work]
+    ),
+) -> domain.User:
     payload = jwt_handler.decode(token)
 
-    with user_unit_of_work as uow:
+    with auth_unit_of_work as uow:
         user = uow.user.find_by_email(payload.sub)
 
     if not user:

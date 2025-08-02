@@ -1,9 +1,11 @@
 from collections.abc import Callable
 from typing import Self
+from uuid import UUID
 
 import pendulum
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
+from hobbyroom import database
 from hobbyroom.settings import settings
 
 
@@ -25,3 +27,25 @@ class JWTPayload(BaseModel):
 
     def is_expired(self, current_time: pendulum.DateTime) -> bool:
         return self.exp < current_time.timestamp()
+
+
+class Persona(BaseModel):
+    id: UUID
+    name: str
+
+
+class User(BaseModel):
+    id: UUID
+    email: EmailStr
+    personas: list[Persona] = Field(default_factory=list)
+
+    @classmethod
+    def from_orm(cls, user_obj: database.User) -> Self:
+        return cls(
+            id=user_obj.id,
+            email=user_obj.email,
+            personas=[
+                Persona.model_validate(persona.to_dict())
+                for persona in user_obj.personas
+            ],
+        )

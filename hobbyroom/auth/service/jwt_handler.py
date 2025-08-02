@@ -4,7 +4,7 @@ import jwt
 import pendulum
 
 from hobbyroom import exceptions
-from hobbyroom.user import domain
+from hobbyroom.auth import domain
 
 
 class JWTHandler:

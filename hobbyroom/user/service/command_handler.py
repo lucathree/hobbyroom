@@ -4,9 +4,8 @@ from uuid import UUID
 import bcrypt
 import pendulum
 
-from hobbyroom import exceptions
+from hobbyroom import auth, exceptions
 from hobbyroom.user import adapter, command, domain, schema
-from hobbyroom.user.service import jwt_handler
 
 
 class CreateUserHandler:
@@ -36,7 +35,7 @@ class AuthorizeUserHandler:
     def __init__(
         self,
         user_unit_of_work: adapter.UserUnitOfWork,
-        jwt_handler: jwt_handler.JWTHandler,
+        jwt_handler: auth.JWTHandler,
     ):
         self.user_unit_of_work = user_unit_of_work
         self.jwt_handler = jwt_handler

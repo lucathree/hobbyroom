@@ -1,6 +1,5 @@
 from dependency_injector import containers, providers
 
-from hobbyroom.settings import settings
 from hobbyroom.user import adapter, service
 
 
@@ -21,17 +20,12 @@ class ServiceContainer(containers.DeclarativeContainer):
     adapter = providers.DependenciesContainer()
     id_generator = providers.Dependency()
     clock = providers.Dependency()
+    jwt_handler = providers.Dependency()
 
     create_user_handler = providers.Factory(
         service.CreateUserHandler,
         user_unit_of_work=adapter.user_unit_of_work,
         id_generator=id_generator,
-        clock=clock,
-    )
-    jwt_handler = providers.Factory(
-        service.JWTHandler,
-        secret_key=settings.jwt_secret_key,
-        algorithm=settings.jwt_algorithm,
         clock=clock,
     )
     authorize_user_handler = providers.Factory(
@@ -51,6 +45,7 @@ class UserContainer(containers.DeclarativeContainer):
     session_factory = providers.Dependency()
     id_generator = providers.Dependency()
     clock = providers.Dependency()
+    jwt_handler = providers.Dependency()
 
     adapter = providers.Container(
         AdapterContainer,
@@ -61,4 +56,5 @@ class UserContainer(containers.DeclarativeContainer):
         adapter=adapter,
         id_generator=id_generator,
         clock=clock,
+        jwt_handler=jwt_handler,
     )
