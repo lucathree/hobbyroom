@@ -5,10 +5,6 @@ from pydantic import BaseModel, EmailStr
 from hobbyroom import auth
 
 
-class UserToken(BaseModel):
-    token: str
-
-
 class UserPersona(BaseModel):
     id: str
     name: str
