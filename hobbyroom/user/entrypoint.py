@@ -28,28 +28,6 @@ async def create_user(
     return Response(status_code=http.HTTPStatus.CREATED)
 
 
-@router.post(
-    "/v1/users/auth",
-    response_model=schema.UserToken,
-    status_code=http.HTTPStatus.OK,
-    tags=[constants.OpenApiTag.USER],
-    summary="사용자 계정 인증",
-    description="사용자 계정 정보를 확인하고 인증 정보를 반환합니다.",
-    responses=exceptions.get_responses(
-        http.HTTPStatus.UNPROCESSABLE_ENTITY,
-        http.HTTPStatus.UNAUTHORIZED,
-    ),
-)
-@inject
-async def authorize_user(
-    cmd: command.AuthorizeUser,
-    handler: service.AuthorizeUserHandler = Depends(
-        Provide[Container.user.service.authorize_user_handler]
-    ),
-):
-    return handler.handle(cmd)
-
-
 @router.get(
     "/v1/users/me",
     response_model=schema.UserInfo,
