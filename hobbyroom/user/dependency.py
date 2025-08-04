@@ -20,18 +20,12 @@ class ServiceContainer(containers.DeclarativeContainer):
     adapter = providers.DependenciesContainer()
     id_generator = providers.Dependency()
     clock = providers.Dependency()
-    jwt_handler = providers.Dependency()
 
     create_user_handler = providers.Factory(
         service.CreateUserHandler,
         user_unit_of_work=adapter.user_unit_of_work,
         id_generator=id_generator,
         clock=clock,
-    )
-    authorize_user_handler = providers.Factory(
-        service.AuthorizeUserHandler,
-        user_unit_of_work=adapter.user_unit_of_work,
-        jwt_handler=jwt_handler,
     )
     create_persona_handler = providers.Factory(
         service.CreatePersonaHandler,
@@ -45,7 +39,6 @@ class UserContainer(containers.DeclarativeContainer):
     session_factory = providers.Dependency()
     id_generator = providers.Dependency()
     clock = providers.Dependency()
-    jwt_handler = providers.Dependency()
 
     adapter = providers.Container(
         AdapterContainer,
@@ -56,5 +49,4 @@ class UserContainer(containers.DeclarativeContainer):
         adapter=adapter,
         id_generator=id_generator,
         clock=clock,
-        jwt_handler=jwt_handler,
     )

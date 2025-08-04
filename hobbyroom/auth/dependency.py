@@ -26,6 +26,11 @@ class ServiceContainer(containers.DeclarativeContainer):
         algorithm=settings.jwt_algorithm,
         clock=clock,
     )
+    authorize_user_handler = providers.Factory(
+        service.AuthorizeUserHandler,
+        auth_unit_of_work=adapter.auth_unit_of_work,
+        jwt_handler=jwt_handler,
+    )
 
 
 class AuthContainer(containers.DeclarativeContainer):

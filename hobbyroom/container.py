@@ -13,8 +13,9 @@ class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         modules=[
             ".depends",
-            ".user.entrypoint",
+            ".auth.entrypoint",
             ".gathering.entrypoint",
+            ".user.entrypoint",
         ]
     )
 
@@ -43,5 +44,4 @@ class Container(containers.DeclarativeContainer):
         session_factory=db_session_factory,
         id_generator=id_generator,
         clock=clock,
-        jwt_handler=auth.service.jwt_handler,
     )

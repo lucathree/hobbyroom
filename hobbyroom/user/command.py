@@ -15,11 +15,6 @@ class CreateUser(BaseModel):
         ).decode()
 
 
-class AuthorizeUser(BaseModel):
-    email: EmailStr
-    password: str
-
-
 class CreatePersona(BaseModel):
     name: str
     user_id: UUID | None = None
