@@ -37,6 +37,7 @@ class Persona(BaseModel):
 class User(BaseModel):
     id: UUID
     email: EmailStr
+    password: str | None = None
     personas: list[Persona] = Field(default_factory=list)
 
     @classmethod
@@ -44,6 +45,7 @@ class User(BaseModel):
         return cls(
             id=user_obj.id,
             email=user_obj.email,
+            password=user_obj.password,
             personas=[
                 Persona.model_validate(persona.to_dict())
                 for persona in user_obj.personas
