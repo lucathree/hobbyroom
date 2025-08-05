@@ -31,6 +31,11 @@ class ServiceContainer(containers.DeclarativeContainer):
         auth_unit_of_work=adapter.auth_unit_of_work,
         jwt_handler=jwt_handler,
     )
+    authorize_persona_handler = providers.Factory(
+        service.AuthorizePersonaHandler,
+        auth_unit_of_work=adapter.auth_unit_of_work,
+        jwt_handler=jwt_handler,
+    )
 
 
 class AuthContainer(containers.DeclarativeContainer):
