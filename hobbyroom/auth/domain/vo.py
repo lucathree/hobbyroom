@@ -14,7 +14,7 @@ class JWTPayload(BaseModel):
     iat: int
     exp: int
     persona: str | None = None
-    affiliated_gatherings: list[UUID] | None = None
+    affiliated_gathering_ids: list[str] | None = None
 
     @classmethod
     def create(cls, user_email: str, clock: Callable[..., pendulum.DateTime]) -> Self:
@@ -29,6 +29,24 @@ class JWTPayload(BaseModel):
 
     def is_expired(self, current_time: pendulum.DateTime) -> bool:
         return self.exp < current_time.timestamp()
+
+    def update_persona_info(
+        self,
+        persona_name: str,
+        affiliated_gathering_ids: list[str],
+        clock: Callable[..., pendulum.DateTime],
+    ) -> Self:
+        current_time = clock()
+        expiration_time = current_time + settings.jwt_expiration_timedelta
+
+        return self.model_copy(
+            update={
+                "persona": persona_name,
+                "affiliated_gathering_ids": affiliated_gathering_ids,
+                "iat": int(current_time.timestamp()),
+                "exp": int(expiration_time.timestamp()),
+            }
+        )
 
 
 class Persona(BaseModel):
