@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
 
-class UserToken(BaseModel):
+class AuthorizedToken(BaseModel):
     token: str
