@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -7,5 +9,5 @@ class AuthorizeUser(BaseModel):
 
 
 class AuthorizePersona(BaseModel):
-    persona_id: str
+    persona_id: UUID
     user_jwt: str | None = None
