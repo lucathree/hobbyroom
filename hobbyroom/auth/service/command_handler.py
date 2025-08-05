@@ -63,6 +63,6 @@ class AuthorizePersonaHandler:
                 raise exceptions.NotFoundError("페르소나에 대한 소속 정보가 없습니다.")
 
             token = self.jwt_handler.update_persona_info(
-                payload=payload, persona_name=persona.name, affiliations=affiliations
+                payload=payload, persona_id=persona.id, affiliations=affiliations
             )
             return schema.AuthorizedToken(token=token)
