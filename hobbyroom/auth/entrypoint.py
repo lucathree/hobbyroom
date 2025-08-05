@@ -10,6 +10,7 @@ from hobbyroom.container import Container
 
 router = APIRouter()
 user_oauth2_schema = OAuth2PasswordBearer(tokenUrl="/v1/auth/user")
+persona_oauth2_schema = OAuth2PasswordBearer(tokenUrl="/v1/auth/persona")
 
 
 @router.post(

@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from uuid import UUID
 
 import jwt
 import pendulum
@@ -48,11 +49,11 @@ class JWTHandler:
     def update_persona_info(
         self,
         payload: domain.JWTPayload,
-        persona_name: str,
+        persona_id: UUID,
         affiliations: list[domain.Affiliation],
     ) -> str:
         updated_payload = payload.update_persona_info(
-            persona_name=persona_name,
+            persona_id=str(persona_id),
             affiliated_gathering_ids=[
                 str(affiliation.gathering_id) for affiliation in affiliations
             ],
