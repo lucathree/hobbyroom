@@ -1,10 +1,11 @@
 from collections.abc import Callable
+from uuid import UUID
 
 import jwt
 import pendulum
 
 from hobbyroom import exceptions
-from hobbyroom.user import domain
+from hobbyroom.auth import domain
 
 
 class JWTHandler:
@@ -44,3 +45,22 @@ class JWTHandler:
             raise exceptions.UnauthorizedError("인증 토큰이 만료되었습니다.")
 
         return payload
+
+    def update_persona_info(
+        self,
+        payload: domain.JWTPayload,
+        persona_id: UUID,
+        affiliations: list[domain.Affiliation],
+    ) -> str:
+        updated_payload = payload.update_persona_info(
+            persona_id=str(persona_id),
+            affiliated_gathering_ids=[
+                str(affiliation.gathering_id) for affiliation in affiliations
+            ],
+            clock=self.clock,
+        )
+        return jwt.encode(
+            payload=updated_payload.model_dump(),
+            key=self.secret_key,
+            algorithm=self.algorithm,
+        )

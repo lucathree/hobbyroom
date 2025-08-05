@@ -4,7 +4,7 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import Depends, Response
 from fastapi.routing import APIRouter
 
-from hobbyroom import auth, constants, exceptions, user
+from hobbyroom import auth, constants, depends, exceptions
 from hobbyroom.container import Container
 from hobbyroom.gathering import command, service
 
@@ -26,7 +26,7 @@ router = APIRouter()
 @inject
 async def create_gathering(
     cmd: command.CreateGathering,
-    user: user.User = Depends(auth.get_current_user),
+    user: auth.User = Depends(depends.get_current_user),
     handler: service.CreateGatheringHandler = Depends(
         Provide[Container.gathering.service.create_gathering_handler]
     ),
@@ -51,7 +51,7 @@ async def create_gathering(
 @inject
 async def join_gathering(
     cmd: command.JoinGathering,
-    user: user.User = Depends(auth.get_current_user),
+    user: auth.User = Depends(depends.get_current_user),
     handler: service.JoinGatheringHandler = Depends(
         Provide[Container.gathering.service.join_gathering_handler]
     ),

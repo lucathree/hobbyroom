@@ -6,6 +6,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse
 
 from hobbyroom import exceptions
+from hobbyroom.auth.entrypoint import router as auth_router
 from hobbyroom.container import Container
 from hobbyroom.gathering.entrypoint import router as gathering_router
 from hobbyroom.user.entrypoint import router as user_router
@@ -35,6 +36,7 @@ def inject_dependencies(_app: FastAPI) -> None:
 
 
 def add_routers(_app: FastAPI) -> None:
+    _app.include_router(auth_router)
     _app.include_router(user_router)
     _app.include_router(gathering_router)
 

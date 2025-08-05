@@ -2,11 +2,7 @@ from typing import Self
 
 from pydantic import BaseModel, EmailStr
 
-from hobbyroom.user import domain
-
-
-class UserToken(BaseModel):
-    token: str
+from hobbyroom import auth
 
 
 class UserPersona(BaseModel):
@@ -19,7 +15,7 @@ class UserInfo(BaseModel):
     personas: list[UserPersona]
 
     @classmethod
-    def from_domain(cls, user: domain.User) -> Self:
+    def from_auth_vo(cls, user: auth.User) -> Self:
         return cls(
             email=user.email,
             personas=[

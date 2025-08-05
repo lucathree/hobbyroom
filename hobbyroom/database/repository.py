@@ -30,3 +30,8 @@ class SQLAlchemyRepository(Generic[EntityType]):
 
     def find_by_id(self, id: UUID) -> EntityType | None:
         return self.find_by(id=id)
+
+    def list_by(self, **kwargs) -> list[EntityType]:
+        entity_type: EntityType = get_args(self.__class__.__orig_bases__[0])[0]
+        objs = self.session.query(self.__model_cls__).filter_by(**kwargs).all()
+        return [entity_type.model_validate(obj.to_dict()) for obj in objs]
