@@ -14,7 +14,7 @@ class JWTPayload(BaseModel):
     iat: int
     exp: int
     persona: str | None = None
-    affiliated_gathering_ids: list[str] | None = None
+    affiliated_gatherings: list[str] | None = None
 
     @classmethod
     def create(cls, user_email: str, clock: Callable[..., pendulum.DateTime]) -> Self:
@@ -27,12 +27,16 @@ class JWTPayload(BaseModel):
             exp=int(expiration_time.timestamp()),
         )
 
+    @property
+    def persona_id(self) -> UUID | None:
+        return UUID(self.persona) if self.persona else None
+
     def is_expired(self, current_time: pendulum.DateTime) -> bool:
         return self.exp < current_time.timestamp()
 
     def update_persona_info(
         self,
-        persona_name: str,
+        persona_id: str,
         affiliated_gathering_ids: list[str],
         clock: Callable[..., pendulum.DateTime],
     ) -> Self:
@@ -41,8 +45,8 @@ class JWTPayload(BaseModel):
 
         return self.model_copy(
             update={
-                "persona": persona_name,
-                "affiliated_gathering_ids": affiliated_gathering_ids,
+                "persona": persona_id,
+                "affiliated_gatherings": affiliated_gathering_ids,
                 "iat": int(current_time.timestamp()),
                 "exp": int(expiration_time.timestamp()),
             }
@@ -52,6 +56,10 @@ class JWTPayload(BaseModel):
 class Persona(BaseModel):
     id: UUID
     name: str
+    gathering_ids: list[UUID] | None = None
+
+    def add_gathering_ids(self, affiliated_gatherings: list[str]) -> None:
+        self.gathering_ids = [UUID(id) for id in affiliated_gatherings]
 
 
 class User(BaseModel):
@@ -70,6 +78,12 @@ class User(BaseModel):
                 Persona.model_validate(persona.to_dict())
                 for persona in user_obj.personas
             ],
+        )
+
+    def find_persona(self, persona_id: UUID) -> Persona | None:
+        return next(
+            (persona for persona in self.personas if persona.id == persona_id),
+            None,
         )
 
 
