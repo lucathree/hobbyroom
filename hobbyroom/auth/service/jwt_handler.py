@@ -44,3 +44,22 @@ class JWTHandler:
             raise exceptions.UnauthorizedError("인증 토큰이 만료되었습니다.")
 
         return payload
+
+    def update_persona_info(
+        self,
+        payload: domain.JWTPayload,
+        persona_name: str,
+        affiliations: list[domain.Affiliation],
+    ) -> str:
+        updated_payload = payload.update_persona_info(
+            persona_name=persona_name,
+            affiliated_gathering_ids=[
+                str(affiliation.gathering_id) for affiliation in affiliations
+            ],
+            clock=self.clock,
+        )
+        return jwt.encode(
+            payload=updated_payload.model_dump(),
+            key=self.secret_key,
+            algorithm=self.algorithm,
+        )

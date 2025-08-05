@@ -8,10 +8,12 @@ class AdapterContainer(containers.DeclarativeContainer):
     session_factory = providers.Dependency()
 
     user_repo_factory = providers.Factory(lambda: adapter.UserRepository)
+    affiliation_repo_factory = providers.Factory(lambda: adapter.AffiliationRepository)
     auth_unit_of_work = providers.Factory(
         adapter.AuthUnitOfWork,
         session_factory=session_factory,
         user_repo_factory=user_repo_factory,
+        affiliation_repo_factory=affiliation_repo_factory,
     )
 
 
@@ -28,6 +30,11 @@ class ServiceContainer(containers.DeclarativeContainer):
     )
     authorize_user_handler = providers.Factory(
         service.AuthorizeUserHandler,
+        auth_unit_of_work=adapter.auth_unit_of_work,
+        jwt_handler=jwt_handler,
+    )
+    authorize_persona_handler = providers.Factory(
+        service.AuthorizePersonaHandler,
         auth_unit_of_work=adapter.auth_unit_of_work,
         jwt_handler=jwt_handler,
     )

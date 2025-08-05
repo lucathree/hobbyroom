@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from hobbyroom import database
 from hobbyroom.auth import domain
 
@@ -11,3 +13,10 @@ class UserRepository(database.SQLAlchemyRepository[domain.User]):
 
     def find_by_email(self, email: str) -> domain.User | None:
         return self.find_by(email=email)
+
+
+class AffiliationRepository(database.SQLAlchemyRepository[domain.Affiliation]):
+    __model_cls__ = database.Affiliation
+
+    def list_by_persona_id(self, persona_id: UUID) -> list[domain.Affiliation]:
+        return self.list_by(persona_id=persona_id)
