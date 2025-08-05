@@ -13,6 +13,8 @@ class JWTPayload(BaseModel):
     sub: str
     iat: int
     exp: int
+    persona: str | None = None
+    affiliated_gatherings: list[UUID] | None = None
 
     @classmethod
     def create(cls, user_email: str, clock: Callable[..., pendulum.DateTime]) -> Self:
@@ -51,3 +53,8 @@ class User(BaseModel):
                 for persona in user_obj.personas
             ],
         )
+
+
+class Affiliation(BaseModel):
+    persona_id: UUID
+    gathering_id: UUID
