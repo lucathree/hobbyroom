@@ -71,8 +71,8 @@ class Post(BaseModel):
     content: str
     gathering_id: UUID
     persona_id: UUID
-    created_at: pendulum.DateTime
-    updated_at: pendulum.DateTime
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
 
     @classmethod
     def create(
