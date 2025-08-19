@@ -8,11 +8,13 @@ class AdapterContainer(containers.DeclarativeContainer):
 
     gathering_repo_factory = providers.Factory(lambda: adapter.GatheringRepository)
     affiliation_repo_factory = providers.Factory(lambda: adapter.AffiliationRepository)
+    post_repo_factory = providers.Factory(lambda: adapter.PostRepository)
     gathering_unit_of_work = providers.Factory(
         adapter.GatheringUnitOfWork,
         session_factory=session_factory,
         gathering_repo_factory=gathering_repo_factory,
         affiliation_repo_factory=affiliation_repo_factory,
+        post_repo_factory=post_repo_factory,
     )
 
 
@@ -29,6 +31,12 @@ class ServiceContainer(containers.DeclarativeContainer):
     )
     join_gathering_handler = providers.Factory(
         service.JoinGatheringHandler,
+        gathering_unit_of_work=adapter.gathering_unit_of_work,
+        id_generator=id_generator,
+        clock=clock,
+    )
+    create_post_handler = providers.Factory(
+        service.CreatePostHandler,
         gathering_unit_of_work=adapter.gathering_unit_of_work,
         id_generator=id_generator,
         clock=clock,

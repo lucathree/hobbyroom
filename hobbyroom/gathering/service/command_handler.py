@@ -65,3 +65,30 @@ class JoinGatheringHandler:
             )
             uow.affiliation.add(entity)
             uow.commit()
+
+
+class CreatePostHandler:
+    def __init__(
+        self,
+        gathering_unit_of_work: adapter.GatheringUnitOfWork,
+        id_generator: Callable[..., UUID],
+        clock: Callable[..., pendulum.DateTime],
+    ):
+        self.gathering_unit_of_work = gathering_unit_of_work
+        self.id_generator = id_generator
+        self.clock = clock
+
+    def handle(self, cmd: command.CreatePost) -> None:
+        post_id = self.id_generator()
+        creation_time = self.clock()
+        with self.gathering_unit_of_work as uow:
+            post = domain.Post.create(
+                id=post_id,
+                title=cmd.title,
+                content=cmd.content,
+                gathering_id=cmd.gathering_id,
+                persona_id=cmd.persona_id,
+                created_at=creation_time,
+            )
+            uow.post.add(post)
+            uow.commit()
