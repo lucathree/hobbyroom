@@ -61,6 +61,11 @@ class Persona(BaseModel):
     def add_gathering_ids(self, affiliated_gatherings: list[str]) -> None:
         self.gathering_ids = [UUID(id) for id in affiliated_gatherings]
 
+    def is_affiliated(self, gathering_id: UUID) -> bool:
+        if self.gathering_ids is None:
+            return False
+        return gathering_id in self.gathering_ids
+
 
 class User(BaseModel):
     id: UUID
