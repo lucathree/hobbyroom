@@ -15,3 +15,7 @@ class AffiliationRepository(database.SQLAlchemyRepository[domain.Affiliation]):
         self, persona_id: UUID, gathering_id: UUID
     ) -> domain.Affiliation | None:
         return self.find_by(persona_id=persona_id, gathering_id=gathering_id)
+
+
+class PostRepository(database.SQLAlchemyRepository[domain.Post]):
+    __model_cls__ = database.Post

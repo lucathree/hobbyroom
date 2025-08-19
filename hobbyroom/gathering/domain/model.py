@@ -63,3 +63,33 @@ class Affiliation(BaseModel):
             is_leader=False,
             joined_at=joined_at,
         )
+
+
+class Post(BaseModel):
+    id: UUID
+    title: str
+    content: str
+    gathering_id: UUID
+    persona_id: UUID
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+    @classmethod
+    def create(
+        cls,
+        id: UUID,
+        title: str,
+        content: str,
+        gathering_id: UUID,
+        persona_id: UUID,
+        created_at: pendulum.DateTime,
+    ) -> Self:
+        return cls(
+            id=id,
+            title=title,
+            content=content,
+            gathering_id=gathering_id,
+            persona_id=persona_id,
+            created_at=created_at,
+            updated_at=created_at,
+        )

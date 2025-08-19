@@ -59,3 +59,28 @@ async def join_gathering(
     cmd.validate_persona_id(user)
     handler.handle(cmd)
     return Response(status_code=http.HTTPStatus.CREATED)
+
+
+@router.post(
+    "/v1/gatherings/posts",
+    status_code=http.HTTPStatus.CREATED,
+    summary="게시글 작성",
+    description="모임에 게시글을 작성합니다.",
+    tags=[constants.OpenApiTag.GATHERING],
+    responses=exceptions.get_responses(
+        http.HTTPStatus.UNPROCESSABLE_ENTITY,
+        http.HTTPStatus.UNAUTHORIZED,
+        http.HTTPStatus.NOT_FOUND,
+    ),
+)
+@inject
+async def create_post(
+    cmd: command.CreatePost,
+    persona: auth.Persona = Depends(depends.get_current_persona),
+    handler: service.CreatePostHandler = Depends(
+        Provide[Container.gathering.service.create_post_handler]
+    ),
+):
+    cmd.add_persona_id(persona=persona)
+    handler.handle(cmd)
+    return Response(status_code=http.HTTPStatus.CREATED)
