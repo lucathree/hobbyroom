@@ -41,6 +41,10 @@ class ServiceContainer(containers.DeclarativeContainer):
         id_generator=id_generator,
         clock=clock,
     )
+    list_posts_handler = providers.Factory(
+        service.ListPostsHandler,
+        gathering_unit_of_work=adapter.gathering_unit_of_work,
+    )
 
 
 class GatheringContainer(containers.DeclarativeContainer):

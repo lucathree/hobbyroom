@@ -1,0 +1,17 @@
+from hobbyroom import exceptions
+from hobbyroom.gathering import adapter, query, schema
+
+
+class ListPostsHandler:
+    def __init__(self, gathering_unit_of_work: adapter.GatheringUnitOfWork):
+        self.gathering_unit_of_work = gathering_unit_of_work
+
+    def handle(self, query: query.ListPosts) -> schema.ListedPosts:
+        with self.gathering_unit_of_work as uow:
+            gathering = uow.gathering.find_by_id(query.gathering_id)
+            if not gathering:
+                raise exceptions.NotFoundError("존재하지 않는 모임입니다.")
+            total = uow.post.count_total_per_gathering(query.gathering_id)
+            posts = uow.post.list_by_query(query)
+
+        return schema.ListedPosts(total=total, posts=posts)
