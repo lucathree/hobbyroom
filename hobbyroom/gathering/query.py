@@ -12,3 +12,8 @@ class ListPosts(BaseModel):
     @property
     def offset(self) -> int:
         return (self.page - 1) * self.per_page
+
+
+class RetrievePost(BaseModel):
+    gathering_id: UUID
+    post_id: UUID
