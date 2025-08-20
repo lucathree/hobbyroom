@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from dependency_injector.wiring import Provide, inject
 from fastapi import Depends
 
@@ -26,6 +28,7 @@ def get_current_user(
 
 @inject
 def get_current_persona(
+    gathering_id: UUID | None = None,
     token: str = Depends(auth.persona_oauth2_schema),
     jwt_handler: auth.JWTHandler = Depends(Provide[Container.auth.service.jwt_handler]),
     auth_unit_of_work: auth.AuthUnitOfWork = Depends(
@@ -46,5 +49,9 @@ def get_current_persona(
                 "페르소나 인증 정보가 유효하지 않습니다."
             )
 
-    persona.add_gathering_ids(affiliated_gatherings=payload.affiliated_gatherings)
+    if gathering_id is not None:
+        persona.add_gathering_id(
+            affiliated_gathering_ids=payload.affiliated_gatherings,
+            current_gathering_id=gathering_id,
+        )
     return persona
