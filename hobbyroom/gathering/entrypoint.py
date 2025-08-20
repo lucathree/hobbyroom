@@ -62,7 +62,7 @@ async def join_gathering(
 
 
 @router.post(
-    "/v1/gatherings/posts",
+    "/v1/gatherings/{gathering_id}/posts",
     status_code=http.HTTPStatus.CREATED,
     summary="게시글 작성",
     description="모임에 게시글을 작성합니다.",
@@ -81,6 +81,6 @@ async def create_post(
         Provide[Container.gathering.service.create_post_handler]
     ),
 ):
-    cmd.add_persona_id(persona=persona)
+    cmd.add_affiliation_info(persona=persona)
     handler.handle(cmd)
     return Response(status_code=http.HTTPStatus.CREATED)

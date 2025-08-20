@@ -28,12 +28,9 @@ class JoinGathering(InitialGatheringCommand):
 class CreatePost(BaseModel):
     title: str
     content: str
-    gathering_id: UUID
+    gathering_id: UUID | None = None
     persona_id: UUID | None = None
 
-    def add_persona_id(self, persona: auth.Persona) -> None:
-        if not persona.is_affiliated(self.gathering_id):
-            raise exceptions.UnauthorizedError(
-                "해당 모임에 소속되지 않은 페르소나입니다."
-            )
+    def add_affiliation_info(self, persona: auth.Persona) -> None:
+        self.gathering_id = persona.gathering_id
         self.persona_id = persona.id
