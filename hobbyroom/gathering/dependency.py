@@ -45,6 +45,10 @@ class ServiceContainer(containers.DeclarativeContainer):
         service.ListPostsHandler,
         gathering_unit_of_work=adapter.gathering_unit_of_work,
     )
+    retrieve_post_handler = providers.Factory(
+        service.RetrievePostHandler,
+        gathering_unit_of_work=adapter.gathering_unit_of_work,
+    )
 
 
 class GatheringContainer(containers.DeclarativeContainer):
