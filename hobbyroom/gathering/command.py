@@ -34,3 +34,24 @@ class CreatePost(BaseModel):
     def add_affiliation_info(self, persona: auth.Persona) -> None:
         self.gathering_id = persona.gathering_id
         self.persona_id = persona.id
+
+
+class UpdatePost(BaseModel):
+    title: str | None = None
+    content: str | None = None
+    post_id: UUID | None = None
+    gathering_id: UUID | None = None
+    persona_id: UUID | None = None
+
+    @property
+    def has_entity_ids(self) -> bool:
+        return (
+            self.post_id is not None
+            and self.gathering_id is not None
+            and self.persona_id is not None
+        )
+
+    def add_entity_ids(self, post_id: UUID, persona: auth.Persona) -> None:
+        self.post_id = post_id
+        self.gathering_id = persona.gathering_id
+        self.persona_id = persona.id
