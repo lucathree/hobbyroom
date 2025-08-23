@@ -65,3 +65,73 @@ class JoinGatheringHandler:
             )
             uow.affiliation.add(entity)
             uow.commit()
+
+
+class CreatePostHandler:
+    def __init__(
+        self,
+        gathering_unit_of_work: adapter.GatheringUnitOfWork,
+        id_generator: Callable[..., UUID],
+        clock: Callable[..., pendulum.DateTime],
+    ):
+        self.gathering_unit_of_work = gathering_unit_of_work
+        self.id_generator = id_generator
+        self.clock = clock
+
+    def handle(self, cmd: command.CreatePost) -> None:
+        post_id = self.id_generator()
+        creation_time = self.clock()
+        with self.gathering_unit_of_work as uow:
+            post = domain.Post.create(
+                id=post_id,
+                title=cmd.title,
+                content=cmd.content,
+                gathering_id=cmd.gathering_id,
+                persona_id=cmd.persona_id,
+                created_at=creation_time,
+            )
+            uow.post.add(post)
+            uow.commit()
+
+
+class UpdatePostHandler:
+    def __init__(
+        self,
+        gathering_unit_of_work: adapter.GatheringUnitOfWork,
+        clock: Callable[..., pendulum.DateTime],
+    ):
+        self.gathering_unit_of_work = gathering_unit_of_work
+        self.clock = clock
+
+    def handle(self, cmd: command.UpdatePost) -> None:
+        if not cmd.has_entity_ids:
+            raise exceptions.DomainValidationError(
+                "게시글 수정을 위한 정보가 입력되지 않았습니다."
+            )
+        with self.gathering_unit_of_work as uow:
+            post = uow.post.find_by_id(cmd.post_id)
+            if post is None or post.gathering_id != cmd.gathering_id:
+                raise exceptions.NotFoundError("게시글을 찾을 수 없습니다.")
+            uow.post.update_post(
+                post_id=post.id,
+                title=cmd.title or post.title,
+                content=cmd.content or post.content,
+                updated_at=self.clock(),
+            )
+            uow.commit()
+
+
+class DeletePostHandler:
+    def __init__(
+        self,
+        gathering_unit_of_work: adapter.GatheringUnitOfWork,
+    ):
+        self.gathering_unit_of_work = gathering_unit_of_work
+
+    def handle(self, cmd: command.DeletePost) -> None:
+        with self.gathering_unit_of_work as uow:
+            post = uow.post.find_by_id(cmd.post_id)
+            if post is None or post.gathering_id != cmd.gathering_id:
+                raise exceptions.NotFoundError("게시글을 찾을 수 없습니다.")
+            uow.post.delete(post.id)
+            uow.commit()

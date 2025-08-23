@@ -64,6 +64,10 @@ class Persona(IdentifierBase, TimestampMixin):
     affiliations: Mapped[list["Affiliation"]] = relationship(
         back_populates="persona", cascade="all, delete-orphan"
     )
+    posts: Mapped[list["Post"]] = relationship(
+        back_populates="persona",
+        cascade="all, delete-orphan",
+    )
 
 
 class Gathering(IdentifierBase, TimestampMixin):
@@ -73,6 +77,9 @@ class Gathering(IdentifierBase, TimestampMixin):
     description: Mapped[str]
 
     affiliations: Mapped[list["Affiliation"]] = relationship(
+        back_populates="gathering", cascade="all, delete-orphan"
+    )
+    posts: Mapped[list["Post"]] = relationship(
         back_populates="gathering", cascade="all, delete-orphan"
     )
 
@@ -95,3 +102,15 @@ class Affiliation(Base):
     __table_args__ = (
         UniqueConstraint("persona_id", "gathering_id", name="uq_persona_gathering"),
     )
+
+
+class Post(IdentifierBase, TimestampMixin):
+    __tablename__ = "post"
+
+    title: Mapped[str] = mapped_column(nullable=False)
+    content: Mapped[str] = mapped_column(nullable=False)
+    gathering_id: Mapped[UUID] = mapped_column(ForeignKey("gathering.id"))
+    persona_id: Mapped[UUID] = mapped_column(ForeignKey("persona.id"))
+
+    persona: Mapped["Persona"] = relationship("Persona", back_populates="posts")
+    gathering: Mapped["Gathering"] = relationship("Gathering", back_populates="posts")

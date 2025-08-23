@@ -5,7 +5,7 @@ from uuid import UUID
 import pendulum
 from pydantic import BaseModel, EmailStr, Field
 
-from hobbyroom import database
+from hobbyroom import database, exceptions
 from hobbyroom.settings import settings
 
 
@@ -56,10 +56,23 @@ class JWTPayload(BaseModel):
 class Persona(BaseModel):
     id: UUID
     name: str
-    gathering_ids: list[UUID] | None = None
+    _gathering_id: UUID | None = None
 
-    def add_gathering_ids(self, affiliated_gatherings: list[str]) -> None:
-        self.gathering_ids = [UUID(id) for id in affiliated_gatherings]
+    @property
+    def gathering_id(self) -> UUID:
+        if self._gathering_id is None:
+            raise exceptions.DomainValidationError("현재 모임 정보가 없습니다.")
+        return self._gathering_id
+
+    def add_gathering_id(
+        self, affiliated_gathering_ids: list[str], current_gathering_id: UUID
+    ) -> None:
+        gathering_ids = [UUID(id) for id in affiliated_gathering_ids]
+        if current_gathering_id not in gathering_ids:
+            raise exceptions.UnauthorizedError(
+                "현재 모임 정보에 소속되어 있지 않은 페르소나입니다."
+            )
+        self._gathering_id = current_gathering_id
 
 
 class User(BaseModel):
