@@ -54,6 +54,10 @@ class ServiceContainer(containers.DeclarativeContainer):
         gathering_unit_of_work=adapter.gathering_unit_of_work,
         clock=clock,
     )
+    delete_post_handler = providers.Factory(
+        service.DeletePostHandler,
+        gathering_unit_of_work=adapter.gathering_unit_of_work,
+    )
 
 
 class GatheringContainer(containers.DeclarativeContainer):

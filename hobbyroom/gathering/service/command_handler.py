@@ -119,3 +119,19 @@ class UpdatePostHandler:
                 updated_at=self.clock(),
             )
             uow.commit()
+
+
+class DeletePostHandler:
+    def __init__(
+        self,
+        gathering_unit_of_work: adapter.GatheringUnitOfWork,
+    ):
+        self.gathering_unit_of_work = gathering_unit_of_work
+
+    def handle(self, cmd: command.DeletePost) -> None:
+        with self.gathering_unit_of_work as uow:
+            post = uow.post.find_by_id(cmd.post_id)
+            if post is None or post.gathering_id != cmd.gathering_id:
+                raise exceptions.NotFoundError("게시글을 찾을 수 없습니다.")
+            uow.post.delete(post.id)
+            uow.commit()
