@@ -174,3 +174,32 @@ async def update_post(
     cmd.add_entity_ids(post_id=post_id, persona=persona)
     handler.handle(cmd)
     return Response(status_code=http.HTTPStatus.OK)
+
+
+@router.delete(
+    "/v1/gatherings/{gathering_id}/posts/{post_id}",
+    status_code=http.HTTPStatus.NO_CONTENT,
+    summary="게시글 삭제",
+    description="모임에 작성된 게시글을 삭제합니다.",
+    tags=[constants.OpenApiTag.GATHERING],
+    responses=exceptions.get_responses(
+        http.HTTPStatus.UNPROCESSABLE_ENTITY,
+        http.HTTPStatus.UNAUTHORIZED,
+        http.HTTPStatus.NOT_FOUND,
+    ),
+)
+@inject
+async def delete_post(
+    post_id: UUID,
+    persona: auth.Persona = Depends(depends.get_current_persona),
+    handler: service.DeletePostHandler = Depends(
+        Provide[Container.gathering.service.delete_post_handler]
+    ),
+):
+    cmd = command.DeletePost(
+        post_id=post_id,
+        gathering_id=persona.gathering_id,
+        persona_id=persona.id,
+    )
+    handler.handle(cmd)
+    return Response(status_code=http.HTTPStatus.NO_CONTENT)
