@@ -55,3 +55,9 @@ class UpdatePost(BaseModel):
         self.post_id = post_id
         self.gathering_id = persona.gathering_id
         self.persona_id = persona.id
+
+
+class DeletePost(BaseModel):
+    post_id: UUID
+    gathering_id: UUID
+    persona_id: UUID
