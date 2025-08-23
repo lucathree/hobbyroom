@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import asc, desc
+import pendulum
+from sqlalchemy import asc, desc, update
 from sqlalchemy.orm import selectinload
 
 from hobbyroom import database
@@ -75,3 +76,14 @@ class PostRepository(database.SQLAlchemyRepository[domain.Post]):
                 updated_at=post.updated_at,
             )
         return None
+
+    def update_post(
+        self, post_id: UUID, title: str, content: str, updated_at: pendulum.DateTime
+    ) -> None:
+        stmt = (
+            update(database.Post)
+            .where(database.Post.id == post_id)
+            .values(title=title, content=content, updated_at=updated_at)
+            .execution_options(synchronize_session="fetch")
+        )
+        self.session.execute(stmt)

@@ -2,6 +2,7 @@ from typing import ClassVar, Generic, TypeVar, get_args
 from uuid import UUID
 
 from pydantic import BaseModel
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from hobbyroom.database import model
@@ -35,3 +36,7 @@ class SQLAlchemyRepository(Generic[EntityType]):
         entity_type: EntityType = get_args(self.__class__.__orig_bases__[0])[0]
         objs = self.session.query(self.__model_cls__).filter_by(**kwargs).all()
         return [entity_type.model_validate(obj.to_dict()) for obj in objs]
+
+    def delete(self, id: UUID) -> None:
+        stmt = delete(self.__model_cls__).where(self.__model_cls__.id == id)
+        self.session.execute(stmt)
