@@ -1,1 +1,4 @@
-pytest_plugins = ["tests.fixture.hobbyroom.user"]
+pytest_plugins = [
+    "tests.fixture.hobbyroom.auth",
+    "tests.fixture.hobbyroom.user",
+]
