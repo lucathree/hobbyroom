@@ -1,5 +1,7 @@
 import Providers from './providers'
 import '../src/styles/index.css'
+import '../src/styles/landing.css'
+import '../src/styles/login.css'
 
 export const metadata = {
   title: 'Hobbyroom',
@@ -14,9 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>
-          <div className="App">{children}</div>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

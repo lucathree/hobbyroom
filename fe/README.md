@@ -63,10 +63,13 @@ public/            # Static assets
 ## 🔧 Configuration
 
 ### API Proxy
+
 The Next.js configuration includes automatic API proxy setup:
+
 - Frontend requests to `/api/*` are proxied to `http://localhost:8000/api/*`
 
 ### Code Quality
+
 - **ESLint**: Configured with Next.js core web vitals rules
 - **Prettier**: Consistent code formatting with single quotes, no semicolons
 - **TypeScript**: Strict type checking enabled

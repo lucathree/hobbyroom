@@ -1,7 +1,28 @@
-# Environments
+# Dependencies
+node_modules/
+
+# Production builds
+dist/
+build/
+out/
+
+# Environment variables
 .venv
 .env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Next.js specific
+.next/
+.vercel
+.swc/
+next-env.d.ts
+
+# ESLint cache
+.eslintcache
