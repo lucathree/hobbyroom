@@ -32,7 +32,7 @@ class JWTPayload(BaseModel):
         return UUID(self.persona) if self.persona else None
 
     def is_expired(self, current_time: pendulum.DateTime) -> bool:
-        return self.exp < current_time.timestamp()
+        return self.exp <= current_time.timestamp()
 
     def update_persona_info(
         self,
