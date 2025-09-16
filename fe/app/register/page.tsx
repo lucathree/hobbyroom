@@ -4,18 +4,19 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { authApi } from '../../src/services/api'
-import { useAuth } from '../../src/contexts/AuthContext'
 
-const LoginPage: React.FC = () => {
+const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const router = useRouter()
-  const { login } = useAuth()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -23,9 +24,12 @@ const LoginPage: React.FC = () => {
       ...prev,
       [name]: value,
     }))
-    // Clear error when user starts typing
+    // Clear error and success when user starts typing
     if (error) {
       setError(null)
+    }
+    if (success) {
+      setSuccess(null)
     }
   }
 
@@ -34,24 +38,40 @@ const LoginPage: React.FC = () => {
     setIsLoading(true)
     setError(null)
 
+    // Client-side validation
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
+      setIsLoading(false)
+      return
+    }
+
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long')
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const response = await authApi.login({
+      await authApi.register({
         email: formData.email,
         password: formData.password,
       })
 
-      // Update auth context (this will also store the token)
-      login(response.token)
+      // Show success message
+      setSuccess('Account created successfully! Please log in with your credentials.')
 
-      // Force a hard refresh to ensure auth state is properly loaded
-      window.location.href = '/'
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
     } catch (err: any) {
-      console.error('Login error:', err)
+      console.error('Registration error:', err)
 
-      if (err.response?.status === 401) {
-        setError('Invalid email or password. Please try again.')
-      } else if (err.response?.status === 422) {
-        setError('Please check your email format and try again.')
+      if (err.response?.status === 422) {
+        const errorMessage = err.response?.data?.message || 'Please check your input and try again.'
+        setError(errorMessage)
+      } else if (err.response?.status === 409) {
+        setError('An account with this email already exists.')
       } else if (
         err.code === 'ECONNREFUSED' ||
         err.message?.includes('Network Error')
@@ -69,18 +89,23 @@ const LoginPage: React.FC = () => {
     setShowPassword(!showPassword)
   }
 
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword)
+  }
+
   return (
     <div className="login-page">
       <div className="login-container">
         <div className="login-form">
-          <h1 className="login-title">Login to your Account</h1>
+          <h1 className="login-title">Create your Account</h1>
 
           {error && <div className="error-message">{error}</div>}
+          {success && <div className="success-message">{success}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="email" className="form-label">
-                Username or Email
+                Email Address
               </label>
               <input
                 type="email"
@@ -106,10 +131,11 @@ const LoginPage: React.FC = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="••••••"
+                  placeholder="••••••••"
                   className="form-input password-input"
                   disabled={isLoading}
                   required
+                  minLength={8}
                 />
                 <button
                   type="button"
@@ -123,16 +149,45 @@ const LoginPage: React.FC = () => {
               </div>
             </div>
 
+            <div className="form-group">
+              <label htmlFor="confirmPassword" className="form-label">
+                Confirm Password
+              </label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  className="form-input password-input"
+                  disabled={isLoading}
+                  required
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  onClick={toggleConfirmPasswordVisibility}
+                  className="password-toggle"
+                  disabled={isLoading}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+
             <button type="submit" className="login-button" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
           <div className="auth-link">
             <p>
-              Don't have an account?{' '}
-              <Link href="/register" className="auth-link-text">
-                Sign up here
+              Already have an account?{' '}
+              <Link href="/login" className="auth-link-text">
+                Sign in here
               </Link>
             </p>
           </div>
@@ -142,4 +197,4 @@ const LoginPage: React.FC = () => {
   )
 }
 
-export default LoginPage
+export default RegisterPage

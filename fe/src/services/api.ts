@@ -47,10 +47,24 @@ export interface LoginResponse {
   token: string
 }
 
+export interface RegisterRequest {
+  email: string
+  password: string
+}
+
+export interface RegisterResponse {
+  token: string
+}
+
 // Auth API functions
 export const authApi = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>('/v1/auth/user', credentials)
+    return response.data
+  },
+
+  register: async (userData: RegisterRequest): Promise<RegisterResponse> => {
+    const response = await api.post<RegisterResponse>('/v1/users', userData)
     return response.data
   },
 
