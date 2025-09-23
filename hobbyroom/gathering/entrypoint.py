@@ -62,6 +62,34 @@ async def join_gathering(
     return Response(status_code=http.HTTPStatus.CREATED)
 
 
+@router.get(
+    "/v1/gatherings",
+    response_model=schema.ListedGatherings,
+    status_code=http.HTTPStatus.OK,
+    summary="모임 목록 조회",
+    description="생성되어 있는 모임들의 목록을 반환합니다.",
+    tags=[constants.OpenApiTag.GATHERING],
+    responses=exceptions.get_responses(
+        http.HTTPStatus.UNPROCESSABLE_ENTITY,
+    ),
+)
+@inject
+async def list_gatherings(
+    ascending: bool = False,
+    page: int = 1,
+    per_page: int = 10,
+    handler: service.ListGatheringsHandler = Depends(
+        Provide[Container.gathering.service.list_gatherings_handler]
+    ),
+):
+    qry = query.ListGatherings(
+        ascending=ascending,
+        page=page,
+        per_page=per_page,
+    )
+    return handler.handle(qry)
+
+
 @router.post(
     "/v1/gatherings/{gathering_id}/posts",
     status_code=http.HTTPStatus.CREATED,
