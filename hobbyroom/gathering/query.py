@@ -1,3 +1,4 @@
+import abc
 from typing import Self
 from uuid import UUID
 
@@ -9,7 +10,7 @@ from sqlalchemy.sql import Select
 from hobbyroom import auth, database
 
 
-class PaginationQuery(BaseModel):
+class PaginationQuery(BaseModel, abc.ABC):
     ascending: bool = False
     page: int = Field(ge=1, default=1)
     per_page: int = Field(le=100, default=10)
@@ -18,6 +19,13 @@ class PaginationQuery(BaseModel):
     def offset(self) -> int:
         return (self.page - 1) * self.per_page
 
+    @property
+    @abc.abstractmethod
+    def statement(self) -> Select:
+        raise NotImplementedError
+
+
+class ListGatherings(PaginationQuery):
     @property
     def statement(self) -> Select:
         order_by = (
@@ -31,9 +39,6 @@ class PaginationQuery(BaseModel):
             .offset(self.offset)
             .limit(self.per_page)
         )
-
-
-class ListGatherings(PaginationQuery): ...
 
 
 class ListUserGatherings(PaginationQuery):
