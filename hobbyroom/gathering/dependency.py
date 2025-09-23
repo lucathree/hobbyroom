@@ -58,6 +58,10 @@ class ServiceContainer(containers.DeclarativeContainer):
         service.DeletePostHandler,
         gathering_unit_of_work=adapter.gathering_unit_of_work,
     )
+    list_gatherings_handler = providers.Factory(
+        service.ListGatheringsHandler,
+        gathering_unit_of_work=adapter.gathering_unit_of_work,
+    )
 
 
 class GatheringContainer(containers.DeclarativeContainer):
