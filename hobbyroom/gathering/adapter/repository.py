@@ -11,6 +11,33 @@ from hobbyroom.gathering import domain, query
 class GatheringRepository(database.SQLAlchemyRepository[domain.Gathering]):
     __model_cls__ = database.Gathering
 
+    def list_by_query(self, query: query.ListGatherings) -> list[domain.Gathering]:
+        order_by = (
+            asc(database.Gathering.created_at)
+            if query.ascending
+            else desc(database.Gathering.created_at)
+        )
+        gatherings = (
+            self.session.query(database.Gathering)
+            .order_by(order_by)
+            .offset(query.offset)
+            .limit(query.per_page)
+            .all()
+        )
+        return [
+            domain.Gathering(
+                id=gathering.id,
+                name=gathering.name,
+                description=gathering.description,
+                created_at=gathering.created_at,
+                updated_at=gathering.updated_at,
+            )
+            for gathering in gatherings
+        ]
+
+    def count_total(self) -> int:
+        return self.session.query(database.Gathering).count()
+
 
 class AffiliationRepository(database.SQLAlchemyRepository[domain.Affiliation]):
     __model_cls__ = database.Affiliation
