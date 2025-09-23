@@ -1,8 +1,7 @@
 from uuid import UUID
 
 import pendulum
-from sqlalchemy import asc, desc, update
-from sqlalchemy.orm import selectinload
+from sqlalchemy import update
 
 from hobbyroom import database
 from hobbyroom.gathering import domain, query
@@ -11,18 +10,9 @@ from hobbyroom.gathering import domain, query
 class GatheringRepository(database.SQLAlchemyRepository[domain.Gathering]):
     __model_cls__ = database.Gathering
 
-    def list_by_query(self, query: query.ListGatherings) -> list[domain.Gathering]:
-        order_by = (
-            asc(database.Gathering.created_at)
-            if query.ascending
-            else desc(database.Gathering.created_at)
-        )
-        gatherings = (
-            self.session.query(database.Gathering)
-            .order_by(order_by)
-            .offset(query.offset)
-            .limit(query.per_page)
-            .all()
+    def list_by_query(self, query: query.PaginationQuery) -> list[domain.Gathering]:
+        gatherings: list[database.Gathering] = (
+            self.session.execute(query.statement).scalars().all()
         )
         return [
             domain.Gathering(
@@ -38,6 +28,17 @@ class GatheringRepository(database.SQLAlchemyRepository[domain.Gathering]):
     def count_total(self) -> int:
         return self.session.query(database.Gathering).count()
 
+    def count_total_by_personas(self, persona_ids: list[UUID]) -> int:
+        return (
+            self.session.query(database.Gathering)
+            .join(
+                database.Affiliation,
+                database.Gathering.id == database.Affiliation.gathering_id,
+            )
+            .filter(database.Affiliation.persona_id.in_(persona_ids))
+            .count()
+        )
+
 
 class AffiliationRepository(database.SQLAlchemyRepository[domain.Affiliation]):
     __model_cls__ = database.Affiliation
@@ -51,20 +52,9 @@ class AffiliationRepository(database.SQLAlchemyRepository[domain.Affiliation]):
 class PostRepository(database.SQLAlchemyRepository[domain.Post]):
     __model_cls__ = database.Post
 
-    def list_by_query(self, query: query.ListPosts) -> list[domain.SearchedPost]:
-        order_by = (
-            asc(database.Post.created_at)
-            if query.ascending
-            else desc(database.Post.created_at)
-        )
-        posts = (
-            self.session.query(database.Post)
-            .filter_by(gathering_id=query.gathering_id)
-            .order_by(order_by)
-            .offset(query.offset)
-            .limit(query.per_page)
-            .options(selectinload(database.Post.persona))
-            .all()
+    def list_by_query(self, query: query.PaginationQuery) -> list[domain.SearchedPost]:
+        posts: list[database.Post] = (
+            self.session.execute(query.statement).scalars().all()
         )
         return [
             domain.SearchedPost(

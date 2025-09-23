@@ -41,3 +41,18 @@ class ListGatheringsHandler:
             gatherings = uow.gathering.list_by_query(query)
 
         return schema.ListedGatherings(total=total, gatherings=gatherings)
+
+
+class ListUserGatheringsHandler:
+    def __init__(self, gathering_unit_of_work: adapter.GatheringUnitOfWork):
+        self.gathering_unit_of_work = gathering_unit_of_work
+
+    def handle(self, query: query.ListUserGatherings) -> schema.ListedGatherings:
+        if not query.persona_ids:
+            return schema.ListedGatherings(total=0, gatherings=[])
+
+        with self.gathering_unit_of_work as uow:
+            total = uow.gathering.count_total_by_personas(query.persona_ids)
+            gatherings = uow.gathering.list_by_query(query)
+
+        return schema.ListedGatherings(total=total, gatherings=gatherings)
