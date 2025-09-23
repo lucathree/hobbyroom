@@ -29,3 +29,15 @@ class RetrievePostHandler:
             if post is None:
                 raise exceptions.NotFoundError("존재하지 않는 게시글입니다.")
         return post
+
+
+class ListGatheringsHandler:
+    def __init__(self, gathering_unit_of_work: adapter.GatheringUnitOfWork):
+        self.gathering_unit_of_work = gathering_unit_of_work
+
+    def handle(self, query: query.ListGatherings) -> schema.ListedGatherings:
+        with self.gathering_unit_of_work as uow:
+            total = uow.gathering.count_total()
+            gatherings = uow.gathering.list_by_query(query)
+
+        return schema.ListedGatherings(total=total, gatherings=gatherings)
