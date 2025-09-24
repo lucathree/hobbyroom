@@ -11,3 +11,8 @@ class SearchedPost(BaseModel):
     writer: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
+
+
+class Persona(BaseModel):
+    id: UUID
+    name: str
