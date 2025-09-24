@@ -48,6 +48,33 @@ class AffiliationRepository(database.SQLAlchemyRepository[domain.Affiliation]):
     ) -> domain.Affiliation | None:
         return self.find_by(persona_id=persona_id, gathering_id=gathering_id)
 
+    def find_gathering_leader(self, gathering_id: UUID) -> domain.Persona | None:
+        result = (
+            self.session.query(database.Persona.id, database.Persona.name)
+            .join(
+                database.Affiliation,
+                database.Persona.id == database.Affiliation.persona_id,
+            )
+            .filter(
+                database.Affiliation.gathering_id == gathering_id,
+                database.Affiliation.is_leader,
+            )
+            .first()
+        )
+        if result:
+            return domain.Persona(
+                id=result.id,
+                name=result.name,
+            )
+        return None
+
+    def count_gathering_members(self, gathering_id: UUID) -> int:
+        return (
+            self.session.query(database.Affiliation)
+            .filter_by(gathering_id=gathering_id)
+            .count()
+        )
+
 
 class PostRepository(database.SQLAlchemyRepository[domain.Post]):
     __model_cls__ = database.Post
