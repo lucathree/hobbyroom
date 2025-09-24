@@ -91,32 +91,26 @@ async def list_gatherings(
 
 
 @router.get(
-    "/v1/gatherings/affiliated",
-    response_model=schema.ListedGatherings,
+    "/v1/gatherings/{gathering_id}",
+    response_model=schema.RetrievedGathering,
     status_code=http.HTTPStatus.OK,
-    summary="내 모임 목록 조회",
-    description="현재 사용자가 소속된 모임들의 목록을 반환합니다.",
+    summary="모임 조회",
+    description="모임의 상세 정보를 조회합니다.",
     tags=[constants.OpenApiTag.GATHERING],
     responses=exceptions.get_responses(
         http.HTTPStatus.UNPROCESSABLE_ENTITY,
-        http.HTTPStatus.UNAUTHORIZED,
+        http.HTTPStatus.NOT_FOUND,
     ),
 )
 @inject
-async def list_user_gatherings(
-    ascending: bool = False,
-    page: int = 1,
-    per_page: int = 10,
-    user: auth.User = Depends(depends.get_current_user),
-    handler: service.ListUserGatheringsHandler = Depends(
-        Provide[Container.gathering.service.list_user_gatherings_handler]
+async def retrieve_gathering(
+    gathering_id: UUID,
+    handler: service.RetrieveGatheringHandler = Depends(
+        Provide[Container.gathering.service.retrieve_gathering_handler]
     ),
 ):
-    qry = query.ListUserGatherings.create(
-        user=user,
-        ascending=ascending,
-        page=page,
-        per_page=per_page,
+    qry = query.RetrieveGathering(
+        gathering_id=gathering_id,
     )
     return handler.handle(qry)
 
