@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import Depends
+from fastapi import Depends, WebSocket, WebSocketException, status
 
 from hobbyroom import auth, exceptions
 from hobbyroom.container import Container
@@ -27,9 +27,9 @@ def get_current_user(
 
 
 @inject
-def get_current_persona(
+def get_current_persona_core(
+    token: str,
     gathering_id: UUID | None = None,
-    token: str = Depends(auth.persona_oauth2_schema),
     jwt_handler: auth.JWTHandler = Depends(Provide[Container.auth.service.jwt_handler]),
     auth_unit_of_work: auth.AuthUnitOfWork = Depends(
         Provide[Container.auth.adapter.auth_unit_of_work]
@@ -55,3 +55,23 @@ def get_current_persona(
             current_gathering_id=gathering_id,
         )
     return persona
+
+
+def get_current_persona(
+    gathering_id: UUID | None = None,
+    token: str = Depends(auth.persona_oauth2_schema),
+) -> auth.Persona:
+    return get_current_persona_core(token=token, gathering_id=gathering_id)
+
+
+async def get_current_persona_ws(
+    websocket: WebSocket,
+) -> auth.Persona:
+    token = websocket.query_params.get("token")
+    gathering_id = websocket.path_params.get("gathering_id")
+    if not (token and gathering_id):
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason="연결에 필요한 정보가 없습니다.",
+        )
+    return get_current_persona_core(token=token, gathering_id=UUID(gathering_id))
