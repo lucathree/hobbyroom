@@ -56,3 +56,26 @@ class ListUserGatheringsHandler:
             gatherings = uow.gathering.list_by_query(query)
 
         return schema.ListedGatherings(total=total, gatherings=gatherings)
+
+
+class RetrieveGatheringHandler:
+    def __init__(self, gathering_unit_of_work: adapter.GatheringUnitOfWork):
+        self.gathering_unit_of_work = gathering_unit_of_work
+
+    def handle(self, query: query.RetrieveGathering) -> schema.RetrievedGathering:
+        with self.gathering_unit_of_work as uow:
+            gathering = uow.gathering.find_by_id(query.gathering_id)
+            if gathering is None:
+                raise exceptions.NotFoundError("존재하지 않는 모임입니다.")
+            leader = uow.affiliation.find_gathering_leader(query.gathering_id)
+            member_count = uow.affiliation.count_gathering_members(query.gathering_id)
+
+        return schema.RetrievedGathering(
+            id=gathering.id,
+            name=gathering.name,
+            description=gathering.description,
+            leader=leader,
+            member_count=member_count,
+            created_at=gathering.created_at,
+            updated_at=gathering.updated_at,
+        )
