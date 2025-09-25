@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 from collections.abc import Callable
 from uuid import UUID
@@ -14,7 +15,7 @@ class ConnectionManager:
         self.active_connections: dict[UUID, list[WebSocket]] = defaultdict(list)
         self.clock: Callable[..., pendulum.DateTime]
 
-    async def connect(self, websocket: WebSocket, persona: auth.Persona):
+    async def connect(self, websocket: WebSocket, persona: auth.Persona) -> None:
         await websocket.accept()
         self.active_connections[persona.gathering_id].append(websocket)
 
@@ -30,7 +31,7 @@ class ConnectionManager:
             message=join_message,
         )
 
-    async def disconnect(self, websocket: WebSocket, persona: auth.Persona):
+    async def disconnect(self, websocket: WebSocket, persona: auth.Persona) -> None:
         self.active_connections[persona.gathering_id].remove(websocket)
         if not self.active_connections[persona.gathering_id]:
             self.refresh_connections()
@@ -48,9 +49,36 @@ class ConnectionManager:
             message=leave_message,
         )
 
+    async def receive_message(
+        self, websocket: WebSocket, persona: auth.Persona
+    ) -> None:
+        data = await websocket.receive_text()
+        try:
+            message_data = json.loads(data)
+            incoming_message = schema.IncomingMessage.model_validate(message_data)
+        except json.JSONDecodeError:
+            error_message = schema.SystemMessage(
+                content="잘못된 메시지 형식입니다.",
+                timestamp=self.clock(),
+            )
+            await websocket.send_text(error_message.model_dump_json())
+            return
+
+        outgoing_message = schema.UserMessage(
+            content=incoming_message.content,
+            message_type=incoming_message.message_type,
+            persona_id=persona.id,
+            persona_name=persona.name,
+            timestamp=self.clock(),
+        )
+        await self.broadcast_to_gathering(
+            gathering_id=persona.gathering_id,
+            message=outgoing_message,
+        )
+
     async def broadcast_to_gathering(
         self, gathering_id: UUID, message: schema.OutgoingMessage
-    ):
+    ) -> None:
         connections: list[WebSocket] = self.active_connections.get(gathering_id, [])
         if not connections:
             raise WebSocketException(
@@ -64,7 +92,7 @@ class ConnectionManager:
             except WebSocketDisconnect:
                 continue
 
-    def refresh_connections(self):
+    def refresh_connections(self) -> None:
         self.active_connections = {
             gathering_id: connections
             for gathering_id, connections in self.active_connections.items()
