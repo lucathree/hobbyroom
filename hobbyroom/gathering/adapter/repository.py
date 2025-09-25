@@ -51,9 +51,9 @@ class AffiliationRepository(database.SQLAlchemyRepository[domain.Affiliation]):
     def find_gathering_leader(self, gathering_id: UUID) -> domain.Persona | None:
         result = (
             self.session.query(database.Persona.id, database.Persona.name)
+            .select_from(database.Affiliation)
             .join(
-                database.Affiliation,
-                database.Persona.id == database.Affiliation.persona_id,
+                database.Persona, database.Persona.id == database.Affiliation.persona_id
             )
             .filter(
                 database.Affiliation.gathering_id == gathering_id,
