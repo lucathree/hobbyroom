@@ -70,8 +70,10 @@ async def get_current_persona_ws(
     websocket: WebSocket,
 ) -> auth.Persona:
     token = websocket.query_params.get("token")
-    if not token:
-        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
-    return get_current_persona_core(
-        token=token, gathering_id=websocket.path_params.get("gathering_id")
-    )
+    gathering_id = websocket.path_params.get("gathering_id")
+    if not (token and gathering_id):
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason="연결에 필요한 정보가 없습니다.",
+        )
+    return get_current_persona_core(token=token, gathering_id=UUID(gathering_id))
