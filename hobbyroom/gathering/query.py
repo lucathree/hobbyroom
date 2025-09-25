@@ -93,6 +93,10 @@ class ListPosts(PaginationQuery):
         )
 
 
+class RetrieveGathering(BaseModel):
+    gathering_id: UUID
+
+
 class RetrievePost(BaseModel):
     gathering_id: UUID
     post_id: UUID

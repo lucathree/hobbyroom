@@ -66,6 +66,10 @@ class ServiceContainer(containers.DeclarativeContainer):
         service.ListUserGatheringsHandler,
         gathering_unit_of_work=adapter.gathering_unit_of_work,
     )
+    retrieve_gathering_handler = providers.Factory(
+        service.RetrieveGatheringHandler,
+        gathering_unit_of_work=adapter.gathering_unit_of_work,
+    )
 
 
 class GatheringContainer(containers.DeclarativeContainer):

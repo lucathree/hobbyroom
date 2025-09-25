@@ -121,6 +121,31 @@ async def list_user_gatherings(
     return handler.handle(qry)
 
 
+@router.get(
+    "/v1/gatherings/{gathering_id}",
+    response_model=schema.RetrievedGathering,
+    status_code=http.HTTPStatus.OK,
+    summary="모임 조회",
+    description="모임의 상세 정보를 조회합니다.",
+    tags=[constants.OpenApiTag.GATHERING],
+    responses=exceptions.get_responses(
+        http.HTTPStatus.UNPROCESSABLE_ENTITY,
+        http.HTTPStatus.NOT_FOUND,
+    ),
+)
+@inject
+async def retrieve_gathering(
+    gathering_id: UUID,
+    handler: service.RetrieveGatheringHandler = Depends(
+        Provide[Container.gathering.service.retrieve_gathering_handler]
+    ),
+):
+    qry = query.RetrieveGathering(
+        gathering_id=gathering_id,
+    )
+    return handler.handle(qry)
+
+
 @router.post(
     "/v1/gatherings/{gathering_id}/posts",
     status_code=http.HTTPStatus.CREATED,
