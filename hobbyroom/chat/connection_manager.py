@@ -11,9 +11,9 @@ from hobbyroom.chat import enums, schema
 
 
 class ConnectionManager:
-    def __init__(self):
+    def __init__(self, clock: Callable[..., pendulum.DateTime]):
         self.active_connections: dict[UUID, list[WebSocket]] = defaultdict(list)
-        self.clock: Callable[..., pendulum.DateTime]
+        self.clock = clock
 
     async def connect(self, websocket: WebSocket, persona: auth.Persona) -> None:
         await websocket.accept()
