@@ -91,6 +91,37 @@ async def list_gatherings(
 
 
 @router.get(
+    "/v1/gatherings/affiliated",
+    response_model=schema.ListedGatherings,
+    status_code=http.HTTPStatus.OK,
+    summary="내 모임 목록 조회",
+    description="현재 사용자가 소속된 모임들의 목록을 반환합니다.",
+    tags=[constants.OpenApiTag.GATHERING],
+    responses=exceptions.get_responses(
+        http.HTTPStatus.UNPROCESSABLE_ENTITY,
+        http.HTTPStatus.UNAUTHORIZED,
+    ),
+)
+@inject
+async def list_user_gatherings(
+    ascending: bool = False,
+    page: int = 1,
+    per_page: int = 10,
+    user: auth.User = Depends(depends.get_current_user),
+    handler: service.ListUserGatheringsHandler = Depends(
+        Provide[Container.gathering.service.list_user_gatherings_handler]
+    ),
+):
+    qry = query.ListUserGatherings.create(
+        user=user,
+        ascending=ascending,
+        page=page,
+        per_page=per_page,
+    )
+    return handler.handle(qry)
+
+
+@router.get(
     "/v1/gatherings/{gathering_id}",
     response_model=schema.RetrievedGathering,
     status_code=http.HTTPStatus.OK,
