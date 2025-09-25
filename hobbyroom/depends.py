@@ -57,7 +57,6 @@ def get_current_persona_core(
     return persona
 
 
-@inject
 def get_current_persona(
     gathering_id: UUID | None = None,
     token: str = Depends(auth.persona_oauth2_schema),
@@ -65,7 +64,6 @@ def get_current_persona(
     return get_current_persona_core(token=token, gathering_id=gathering_id)
 
 
-@inject
 async def get_current_persona_ws(
     websocket: WebSocket,
 ) -> auth.Persona:
