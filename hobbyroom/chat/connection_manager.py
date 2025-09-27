@@ -6,8 +6,7 @@ from uuid import UUID
 import pendulum
 from fastapi import WebSocket, WebSocketDisconnect, WebSocketException, status
 
-from hobbyroom import auth
-from hobbyroom.chat import enums, schema
+from hobbyroom.chat import domain, enums, schema
 
 
 class ConnectionManager:
@@ -15,42 +14,46 @@ class ConnectionManager:
         self.active_connections: dict[UUID, list[WebSocket]] = defaultdict(list)
         self.clock = clock
 
-    async def connect(self, websocket: WebSocket, persona: auth.Persona) -> None:
+    async def connect(
+        self, websocket: WebSocket, connection_info: domain.ConnectionInfo
+    ) -> None:
         await websocket.accept()
-        self.active_connections[persona.gathering_id].append(websocket)
+        self.active_connections[connection_info.gathering_id].append(websocket)
 
         join_message = schema.UserMessage(
-            content=f"{persona.name}님이 채팅방에 입장했습니다.",
+            content=f"{connection_info.persona_name}님이 채팅방에 입장했습니다.",
             message_type=enums.MessageType.JOIN,
-            persona_id=persona.id,
-            persona_name=persona.name,
+            persona_id=connection_info.persona_id,
+            persona_name=connection_info.persona_name,
             timestamp=self.clock(),
         )
         await self.broadcast_to_gathering(
-            gathering_id=persona.gathering_id,
+            gathering_id=connection_info.gathering_id,
             message=join_message,
         )
 
-    async def disconnect(self, websocket: WebSocket, persona: auth.Persona) -> None:
-        self.active_connections[persona.gathering_id].remove(websocket)
-        if not self.active_connections[persona.gathering_id]:
+    async def disconnect(
+        self, websocket: WebSocket, connection_info: domain.ConnectionInfo
+    ) -> None:
+        self.active_connections[connection_info.gathering_id].remove(websocket)
+        if not self.active_connections[connection_info.gathering_id]:
             self.refresh_connections()
             return
 
         leave_message = schema.UserMessage(
-            content=f"{persona.name}님이 채팅방을 나갔습니다.",
+            content=f"{connection_info.persona_name}님이 채팅방을 나갔습니다.",
             message_type=enums.MessageType.LEAVE,
-            persona_id=persona.id,
-            persona_name=persona.name,
+            persona_id=connection_info.persona_id,
+            persona_name=connection_info.persona_name,
             timestamp=self.clock(),
         )
         await self.broadcast_to_gathering(
-            gathering_id=persona.gathering_id,
+            gathering_id=connection_info.gathering_id,
             message=leave_message,
         )
 
     async def receive_message(
-        self, websocket: WebSocket, persona: auth.Persona
+        self, websocket: WebSocket, connection_info: domain.ConnectionInfo
     ) -> None:
         data = await websocket.receive_text()
         try:
@@ -67,12 +70,12 @@ class ConnectionManager:
         outgoing_message = schema.UserMessage(
             content=incoming_message.content,
             message_type=incoming_message.message_type,
-            persona_id=persona.id,
-            persona_name=persona.name,
+            persona_id=connection_info.persona_id,
+            persona_name=connection_info.persona_name,
             timestamp=self.clock(),
         )
         await self.broadcast_to_gathering(
-            gathering_id=persona.gathering_id,
+            gathering_id=connection_info.gathering_id,
             message=outgoing_message,
         )
 
