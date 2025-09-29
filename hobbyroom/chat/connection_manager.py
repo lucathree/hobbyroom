@@ -55,10 +55,9 @@ class ConnectionManager:
     async def receive_message(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
     ) -> None:
-        data = await websocket.receive_text()
         try:
-            message_data = json.loads(data)
-            incoming_message = schema.IncomingMessage.model_validate(message_data)
+            message_data = await websocket.receive_json()
+            incoming_message = schema.IncomingMessage.model_validate_json(message_data)
         except json.JSONDecodeError:
             error_message = schema.SystemMessage(
                 content="잘못된 메시지 형식입니다.",
