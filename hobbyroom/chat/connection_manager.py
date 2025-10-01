@@ -11,26 +11,33 @@ from hobbyroom.chat import domain, enums, schema
 
 class ConnectionManager:
     def __init__(self, clock: Callable[..., pendulum.DateTime]):
-        self.active_connections: dict[UUID, list[WebSocket]] = defaultdict(list)
+        self.active_connections: dict[UUID, dict[UUID, list[WebSocket]]] = defaultdict(
+            dict
+        )
         self.clock = clock
 
     async def connect(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
     ) -> None:
         await websocket.accept()
-        self.active_connections[connection_info.gathering_id].append(websocket)
+        gathering_connections = self.active_connections[connection_info.gathering_id]
+        persona_connections = gathering_connections.setdefault(
+            connection_info.persona_id, []
+        )
+        persona_connections.append(websocket)
 
-        join_message = schema.UserMessage(
-            content=f"{connection_info.persona_name}님이 채팅방에 입장했습니다.",
-            message_type=enums.MessageType.JOIN,
-            persona_id=connection_info.persona_id,
-            persona_name=connection_info.persona_name,
-            timestamp=self.clock(),
-        )
-        await self.broadcast_to_gathering(
-            gathering_id=connection_info.gathering_id,
-            message=join_message,
-        )
+        if len(persona_connections) <= 1:
+            join_message = schema.UserMessage(
+                content=f"{connection_info.persona_name}님이 채팅방에 입장했습니다.",
+                message_type=enums.MessageType.JOIN,
+                persona_id=connection_info.persona_id,
+                persona_name=connection_info.persona_name,
+                timestamp=self.clock(),
+            )
+            await self.broadcast_to_gathering(
+                gathering_id=connection_info.gathering_id,
+                message=join_message,
+            )
 
     async def disconnect(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
