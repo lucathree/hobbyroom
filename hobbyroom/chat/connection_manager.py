@@ -1,3 +1,4 @@
+import itertools
 import json
 from collections import defaultdict
 from collections.abc import Callable
@@ -88,13 +89,16 @@ class ConnectionManager:
     async def broadcast_to_gathering(
         self, gathering_id: UUID, message: schema.OutgoingMessage
     ) -> None:
-        connections: list[WebSocket] = self.active_connections.get(gathering_id, [])
-        if not connections:
+        gathering_connections = self.active_connections.get(gathering_id, {})
+        if not gathering_connections.items():
             raise WebSocketException(
                 code=status.WS_1008_POLICY_VIOLATION,
                 reason="해당 모임에 연결된 사용자가 없습니다.",
             )
         message_data = message.model_dump_json()
+        connections = list(
+            itertools.chain.from_iterable(gathering_connections.values())
+        )
         for websocket in connections:
             try:
                 await websocket.send_text(message_data)
