@@ -46,10 +46,9 @@ class GatheringConnection(BaseModel):
 
     @property
     def has_connections(self) -> bool:
-        self.refresh_connections()
         return bool(self.persona_connections)
 
-    def refresh_connections(self) -> None:
+    def refresh_persona_connections(self) -> None:
         self.persona_connections = [
             pc for pc in self.persona_connections if pc.connections
         ]
