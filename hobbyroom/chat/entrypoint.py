@@ -5,8 +5,10 @@ from fastapi.routing import APIRouter
 from hobbyroom import auth, depends
 from hobbyroom.chat import connection_manager, domain
 from hobbyroom.container import Container
+from hobbyroom.logging import get_logger
 
 router = APIRouter()
+logger = get_logger()
 
 
 @router.websocket("/v1/chat/{gathering_id}")
@@ -29,3 +31,5 @@ async def chat_endpoint(
             await connection_manager.receive_message(websocket, connection_info)
     except Exception:
         await connection_manager.disconnect(websocket, connection_info)
+    finally:
+        connection_manager.refresh_connections()
