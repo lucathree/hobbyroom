@@ -9,10 +9,17 @@ if TYPE_CHECKING:
     from loguru import Logger
 
 
+logger.remove()
+
 logger.add(
-    sys.stdout,
+    sys.stderr,
     level="INFO",
-    format="{level} | {time} | {message}",
+    format=(
+        "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | "
+        "{name}:{function}:{line} | {message}"
+    ),
+    enqueue=True,
+    colorize=True,
 )
 
 
