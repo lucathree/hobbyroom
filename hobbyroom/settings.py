@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     redis_port: int
     redis_password: str
     redis_db: int = 0
+    max_redis_connections: int = 10
 
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
