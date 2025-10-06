@@ -7,30 +7,45 @@ import pydantic
 from fastapi import WebSocket, WebSocketDisconnect
 
 from hobbyroom import exceptions
-from hobbyroom.chat import domain, enums, schema
+from hobbyroom.chat import adapter, domain, enums, schema
 from hobbyroom.logging import get_logger
 
 logger = get_logger()
 
 
 class ConnectionManager:
-    def __init__(self, clock: Callable[..., pendulum.DateTime]):
-        self.active_connections: dict[UUID, domain.GatheringConnection] = dict()
+    def __init__(
+        self,
+        connection_info_repository: adapter.RedisConnectionInfoRepository,
+        clock: Callable[..., pendulum.DateTime],
+        id_generator: Callable[..., UUID],
+    ):
+        self.active_connections: dict[UUID, WebSocket] = dict()
+        self.connection_info_repository = connection_info_repository
         self.clock = clock
+        self.id_generator = id_generator
 
     async def connect(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
     ) -> None:
         await websocket.accept()
-        gathering_connections = self.active_connections.setdefault(
-            connection_info.gathering_id,
-            domain.GatheringConnection(gathering_id=connection_info.gathering_id),
+        connection_id = self.id_generator()
+
+        await self.connection_info_repository.add_connection_info(
+            connection_id=connection_id,
+            gathering_id=connection_info.gathering_id,
+            persona_id=connection_info.persona_id,
         )
-        persona_connection = gathering_connections.upsert_persona_connection(
-            connection_info=connection_info, websocket=websocket
+        self.active_connections[connection_id] = websocket
+
+        connection_count = (
+            await self.connection_info_repository.count_persona_connections(
+                gathering_id=connection_info.gathering_id,
+                persona_id=connection_info.persona_id,
+            )
         )
         logger.info(f"Connection Added: {connection_info}")
-        if persona_connection.has_single_connection:
+        if connection_count == 1:
             join_message = schema.UserMessage(
                 content=f"{connection_info.persona_name}님이 채팅방에 입장했습니다.",
                 message_type=enums.MessageType.JOIN,
