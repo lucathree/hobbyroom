@@ -47,6 +47,7 @@ class Container(containers.DeclarativeContainer):
     chat = providers.Container(
         ChatContainer,
         clock=clock,
+        id_generator=id_generator,
         redis_client=redis_client,
     )
     gathering = providers.Container(
