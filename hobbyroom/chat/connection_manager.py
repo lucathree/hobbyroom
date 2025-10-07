@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from collections.abc import Callable
 from uuid import UUID
 
@@ -18,33 +19,29 @@ class ConnectionManager:
         self,
         connection_info_repository: adapter.RedisConnectionInfoRepository,
         clock: Callable[..., pendulum.DateTime],
-        id_generator: Callable[..., UUID],
     ):
-        self.active_connections: dict[UUID, WebSocket] = dict()
+        self.active_connections: dict[UUID, list[WebSocket]] = defaultdict(list)
         self.connection_info_repository = connection_info_repository
         self.clock = clock
-        self.id_generator = id_generator
 
     async def connect(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
     ) -> None:
         await websocket.accept()
-        connection_id = self.id_generator()
 
         await self.connection_info_repository.add_connection_info(
-            connection_id=connection_id,
             gathering_id=connection_info.gathering_id,
             persona_id=connection_info.persona_id,
         )
-        self.active_connections[connection_id] = websocket
+        self.active_connections[connection_info.gathering_id].append(websocket)
+        logger.info(f"Connection Added: {connection_info}")
 
         connection_count = (
-            await self.connection_info_repository.count_persona_connections(
+            await self.connection_info_repository.retrieve_persona_connection_count(
                 gathering_id=connection_info.gathering_id,
                 persona_id=connection_info.persona_id,
             )
         )
-        logger.info(f"Connection Added: {connection_info}")
         if connection_count == 1:
             join_message = schema.UserMessage(
                 content=f"{connection_info.persona_name}님이 채팅방에 입장했습니다.",

@@ -9,17 +9,16 @@ class RedisConnectionInfoRepository:
 
     async def add_connection_info(
         self,
-        connection_id: UUID,
         gathering_id: UUID,
         persona_id: UUID,
     ) -> None:
         namespace = f"chat:gathering:{gathering_id}:persona:{persona_id}:connections"
-        await self.redis_client.rpush(namespace, connection_id)
+        await self.redis_client.incr(namespace)
 
-    async def count_persona_connections(
+    async def retrieve_persona_connection_count(
         self,
         gathering_id: UUID,
         persona_id: UUID,
     ) -> int:
         namespace = f"chat:gathering:{gathering_id}:persona:{persona_id}:connections"
-        return await self.redis_client.llen(namespace)
+        return int(await self.redis_client.get(namespace)) or 0
