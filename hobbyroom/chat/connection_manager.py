@@ -33,8 +33,6 @@ class ConnectionManager:
             persona_id=connection_info.persona_id,
         )
         self.active_connections[connection_info.gathering_id].append(websocket)
-        logger.info(f"Connection Added: {connection_info}")
-
         connection_count = (
             await self.connection_info_repository.retrieve_persona_connection_count(
                 gathering_id=connection_info.gathering_id,
@@ -53,12 +51,13 @@ class ConnectionManager:
                 gathering_id=connection_info.gathering_id,
                 message=join_message,
             )
+        logger.info(f"Connection Added: {connection_info} | Count: {connection_count}")
 
     async def disconnect(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
     ) -> None:
         self.active_connections.get(connection_info.gathering_id, []).remove(websocket)
-        self.connection_info_repository.remove_connection_info(
+        await self.connection_info_repository.remove_connection_info(
             gathering_id=connection_info.gathering_id,
             persona_id=connection_info.persona_id,
         )
@@ -80,7 +79,9 @@ class ConnectionManager:
                 gathering_id=connection_info.gathering_id,
                 message=leave_message,
             )
-        logger.info(f"Connection Removed: {connection_info}")
+        logger.info(
+            f"Connection Removed: {connection_info} | Count: {connection_count}"
+        )
 
     async def receive_message(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
@@ -113,11 +114,12 @@ class ConnectionManager:
     ) -> None:
         gathering_connections = self.active_connections.get(gathering_id, [])
         message_data = message.model_dump_json()
-        logger.info(f"Broadcasting message: {message_data}")
-
         for websocket in gathering_connections:
             try:
                 await websocket.send_text(message_data)
             except WebSocketDisconnect:
                 logger.warning("WebSocket disconnected during broadcast")
                 continue
+        logger.info(
+            f"Message broadcasted: {message_data} | Count: {len(gathering_connections)}"
+        )
