@@ -113,16 +113,15 @@ class ConnectionManager:
     async def broadcast_to_gathering(
         self, gathering_id: UUID, message: schema.OutgoingMessage
     ) -> None:
-        gathering_connection = self.retrieve_gathering_connection(gathering_id)
+        gathering_connections = self.active_connections.get(gathering_id, [])
         message_data = message.model_dump_json()
         logger.info(f"Broadcasting message: {message_data}")
-        for websocket in gathering_connection.active_websockets:
+
+        for websocket in gathering_connections:
             try:
                 await websocket.send_text(message_data)
             except WebSocketDisconnect:
-                logger.warning(
-                    f"WebSocket disconnected during broadcast: {gathering_connection}"
-                )
+                logger.warning("WebSocket disconnected during broadcast")
                 continue
 
     def refresh_connections(self) -> None:
