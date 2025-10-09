@@ -7,7 +7,6 @@ import pendulum
 import pydantic
 from fastapi import WebSocket, WebSocketDisconnect
 
-from hobbyroom import exceptions
 from hobbyroom.chat import adapter, domain, enums, schema
 from hobbyroom.logging import get_logger
 
@@ -132,22 +131,3 @@ class ConnectionManager:
 
         self.active_connections = active_connections
         logger.info(f"Refreshed connections: {self.active_connections}")
-
-    def retrieve_gathering_connection(
-        self, gathering_id: UUID
-    ) -> domain.GatheringConnection:
-        connection = self.active_connections.get(gathering_id)
-        if connection is None:
-            raise exceptions.DomainValidationError("모임 연결 정보를 찾을 수 없습니다.")
-        return connection
-
-    def retrieve_persona_connection(
-        self, gathering_id: UUID, persona_id: UUID
-    ) -> domain.PersonaConnection:
-        gathering_connection = self.retrieve_gathering_connection(gathering_id)
-        persona_connection = gathering_connection.find_persona_connection(persona_id)
-        if persona_connection is None:
-            raise exceptions.DomainValidationError(
-                "페르소나 연결 정보를 찾을 수 없습니다."
-            )
-        return persona_connection
