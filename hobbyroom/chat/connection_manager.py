@@ -58,19 +58,18 @@ class ConnectionManager:
     async def disconnect(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
     ) -> None:
-        try:
-            persona_connection = self.retrieve_persona_connection(
+        self.active_connections.get(connection_info.gathering_id, []).remove(websocket)
+        self.connection_info_repository.remove_connection_info(
+            gathering_id=connection_info.gathering_id,
+            persona_id=connection_info.persona_id,
+        )
+        connection_count = (
+            await self.connection_info_repository.retrieve_persona_connection_count(
                 gathering_id=connection_info.gathering_id,
                 persona_id=connection_info.persona_id,
             )
-        except exceptions.DomainValidationError:
-            logger.warning(
-                f"Persona connection not found during disconnect: {connection_info}"
-            )
-            return
-
-        persona_connection.remove_connection(websocket)
-        if not persona_connection.connections:
+        )
+        if connection_count < 1:
             leave_message = schema.UserMessage(
                 content=f"{connection_info.persona_name}님이 채팅방을 나갔습니다.",
                 message_type=enums.MessageType.LEAVE,
