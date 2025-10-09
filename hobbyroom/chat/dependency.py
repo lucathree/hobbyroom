@@ -16,20 +16,17 @@ class ServiceContainer(containers.DeclarativeContainer):
     adapter = providers.DependenciesContainer()
 
     clock = providers.Dependency()
-    id_generator = providers.Dependency()
     redis_client = providers.Dependency()
 
     connection_manager = providers.Singleton(
         connection_manager.ConnectionManager,
         clock=clock,
-        id_generator=id_generator,
         connection_info_repository=adapter.redis_connection_info_repository,
     )
 
 
 class ChatContainer(containers.DeclarativeContainer):
     clock = providers.Dependency()
-    id_generator = providers.Dependency()
     redis_client = providers.Dependency()
 
     adapter = providers.Container(
@@ -40,6 +37,5 @@ class ChatContainer(containers.DeclarativeContainer):
         ServiceContainer,
         adapter=adapter,
         clock=clock,
-        id_generator=id_generator,
-        redis=redis_client,
+        redis_client=redis_client,
     )
