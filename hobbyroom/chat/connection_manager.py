@@ -121,13 +121,3 @@ class ConnectionManager:
             except WebSocketDisconnect:
                 logger.warning("WebSocket disconnected during broadcast")
                 continue
-
-    def refresh_connections(self) -> None:
-        active_connections = {}
-        for gathering_id, gathering_connection in self.active_connections.items():
-            gathering_connection.refresh_persona_connections()
-            if gathering_connection.has_connections:
-                active_connections[gathering_id] = gathering_connection
-
-        self.active_connections = active_connections
-        logger.info(f"Refreshed connections: {self.active_connections}")
