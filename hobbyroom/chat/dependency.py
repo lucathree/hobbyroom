@@ -6,8 +6,8 @@ from hobbyroom.chat import adapter, connection_manager
 class AdapterContainer(containers.DeclarativeContainer):
     redis_client = providers.Dependency()
 
-    redis_connection_info_repository = providers.Factory(
-        adapter.RedisConnectionInfoRepository,
+    redis_connection_repository = providers.Factory(
+        adapter.RedisConnectionRepository,
         redis_client=redis_client,
     )
 
@@ -21,7 +21,7 @@ class ServiceContainer(containers.DeclarativeContainer):
     connection_manager = providers.Singleton(
         connection_manager.ConnectionManager,
         clock=clock,
-        connection_info_repository=adapter.redis_connection_info_repository,
+        connection_repository=adapter.redis_connection_repository,
     )
 
 
