@@ -1,36 +1,67 @@
+import asyncio
 import json
+from collections import defaultdict
 from collections.abc import Callable
 from uuid import UUID
 
 import pendulum
 import pydantic
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 
-from hobbyroom import exceptions
-from hobbyroom.chat import domain, enums, schema
+from hobbyroom.chat import adapter, domain, enums, schema
 from hobbyroom.logging import get_logger
 
 logger = get_logger()
 
 
 class ConnectionManager:
-    def __init__(self, clock: Callable[..., pendulum.DateTime]):
-        self.active_connections: dict[UUID, domain.GatheringConnection] = dict()
+    def __init__(
+        self,
+        connection_repository: adapter.RedisConnectionRepository,
+        clock: Callable[..., pendulum.DateTime],
+    ):
+        self.local_connections: dict[UUID, list[WebSocket]] = defaultdict(list)
+        self.connection_repository = connection_repository
         self.clock = clock
+        self.redis_pubsub = None
+        self.listener_task = None
+
+    async def start(self):
+        self.redis_pubsub = self.connection_repository.get_pubsub()
+        self.listener_task = asyncio.create_task(self.listen_to_messages())
+
+    async def stop(self):
+        if self.listener_task:
+            self.listener_task.cancel()
+            try:
+                await self.listener_task
+            except asyncio.CancelledError:
+                pass
+        if self.redis_pubsub:
+            await self.redis_pubsub.close()
 
     async def connect(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
     ) -> None:
         await websocket.accept()
-        gathering_connections = self.active_connections.setdefault(
-            connection_info.gathering_id,
-            domain.GatheringConnection(gathering_id=connection_info.gathering_id),
+        await self.connection_repository.add_connection_info(
+            gathering_id=connection_info.gathering_id,
+            persona_id=connection_info.persona_id,
         )
-        persona_connection = gathering_connections.upsert_persona_connection(
-            connection_info=connection_info, websocket=websocket
+        gathering_connections = self.local_connections[connection_info.gathering_id]
+        if not gathering_connections:
+            await self.redis_pubsub.subscribe(
+                f"chat:gathering:{connection_info.gathering_id}"
+            )
+        gathering_connections.append(websocket)
+
+        connection_count = (
+            await self.connection_repository.retrieve_persona_connection_count(
+                gathering_id=connection_info.gathering_id,
+                persona_id=connection_info.persona_id,
+            )
         )
-        logger.info(f"Connection Added: {connection_info}")
-        if persona_connection.has_single_connection:
+        if connection_count == 1:
             join_message = schema.UserMessage(
                 content=f"{connection_info.persona_name}님이 채팅방에 입장했습니다.",
                 message_type=enums.MessageType.JOIN,
@@ -38,39 +69,11 @@ class ConnectionManager:
                 persona_name=connection_info.persona_name,
                 timestamp=self.clock(),
             )
-            await self.broadcast_to_gathering(
+            await self.connection_repository.publish_message(
                 gathering_id=connection_info.gathering_id,
-                message=join_message,
+                json_message=join_message.model_dump_json(),
             )
-
-    async def disconnect(
-        self, websocket: WebSocket, connection_info: domain.ConnectionInfo
-    ) -> None:
-        try:
-            persona_connection = self.retrieve_persona_connection(
-                gathering_id=connection_info.gathering_id,
-                persona_id=connection_info.persona_id,
-            )
-        except exceptions.DomainValidationError:
-            logger.warning(
-                f"Persona connection not found during disconnect: {connection_info}"
-            )
-            return
-
-        persona_connection.remove_connection(websocket)
-        if not persona_connection.connections:
-            leave_message = schema.UserMessage(
-                content=f"{connection_info.persona_name}님이 채팅방을 나갔습니다.",
-                message_type=enums.MessageType.LEAVE,
-                persona_id=connection_info.persona_id,
-                persona_name=connection_info.persona_name,
-                timestamp=self.clock(),
-            )
-            await self.broadcast_to_gathering(
-                gathering_id=connection_info.gathering_id,
-                message=leave_message,
-            )
-        logger.info(f"Connection Removed: {connection_info}")
+        logger.info(f"Connection Added: {connection_info} | Count: {connection_count}")
 
     async def receive_message(
         self, websocket: WebSocket, connection_info: domain.ConnectionInfo
@@ -93,51 +96,64 @@ class ConnectionManager:
             persona_name=connection_info.persona_name,
             timestamp=self.clock(),
         )
-        await self.broadcast_to_gathering(
+        await self.connection_repository.publish_message(
             gathering_id=connection_info.gathering_id,
-            message=outgoing_message,
+            json_message=outgoing_message.model_dump_json(),
         )
 
-    async def broadcast_to_gathering(
-        self, gathering_id: UUID, message: schema.OutgoingMessage
+    async def disconnect(
+        self, websocket: WebSocket, connection_info: domain.ConnectionInfo
     ) -> None:
-        gathering_connection = self.retrieve_gathering_connection(gathering_id)
-        message_data = message.model_dump_json()
-        logger.info(f"Broadcasting message: {message_data}")
-        for websocket in gathering_connection.active_websockets:
-            try:
-                await websocket.send_text(message_data)
-            except WebSocketDisconnect:
-                logger.warning(
-                    f"WebSocket disconnected during broadcast: {gathering_connection}"
-                )
-                continue
-
-    def refresh_connections(self) -> None:
-        active_connections = {}
-        for gathering_id, gathering_connection in self.active_connections.items():
-            gathering_connection.refresh_persona_connections()
-            if gathering_connection.has_connections:
-                active_connections[gathering_id] = gathering_connection
-
-        self.active_connections = active_connections
-        logger.info(f"Refreshed connections: {self.active_connections}")
-
-    def retrieve_gathering_connection(
-        self, gathering_id: UUID
-    ) -> domain.GatheringConnection:
-        connection = self.active_connections.get(gathering_id)
-        if connection is None:
-            raise exceptions.DomainValidationError("모임 연결 정보를 찾을 수 없습니다.")
-        return connection
-
-    def retrieve_persona_connection(
-        self, gathering_id: UUID, persona_id: UUID
-    ) -> domain.PersonaConnection:
-        gathering_connection = self.retrieve_gathering_connection(gathering_id)
-        persona_connection = gathering_connection.find_persona_connection(persona_id)
-        if persona_connection is None:
-            raise exceptions.DomainValidationError(
-                "페르소나 연결 정보를 찾을 수 없습니다."
+        self.local_connections[connection_info.gathering_id].remove(websocket)
+        await self.connection_repository.remove_connection_info(
+            gathering_id=connection_info.gathering_id,
+            persona_id=connection_info.persona_id,
+        )
+        connection_count = (
+            await self.connection_repository.retrieve_persona_connection_count(
+                gathering_id=connection_info.gathering_id,
+                persona_id=connection_info.persona_id,
             )
-        return persona_connection
+        )
+        if connection_count < 1:
+            leave_message = schema.UserMessage(
+                content=f"{connection_info.persona_name}님이 채팅방을 나갔습니다.",
+                message_type=enums.MessageType.LEAVE,
+                persona_id=connection_info.persona_id,
+                persona_name=connection_info.persona_name,
+                timestamp=self.clock(),
+            )
+            await self.connection_repository.publish_message(
+                gathering_id=connection_info.gathering_id,
+                json_message=leave_message.model_dump_json(),
+            )
+        logger.info(
+            f"Connection Removed: {connection_info} | Count: {connection_count}"
+        )
+        if not self.local_connections[connection_info.gathering_id]:
+            await self.redis_pubsub.unsubscribe(
+                f"chat:gathering:{connection_info.gathering_id}"
+            )
+
+    async def listen_to_messages(self) -> None:
+        try:
+            async for message in self.redis_pubsub.listen():
+                if message["type"] == "message":
+                    gathering_id = UUID(message["channel"].split(":")[-1])
+                    await self.broadcast_message(gathering_id, message["data"])
+        except Exception as e:
+            logger.error(f"Error while listening to messages: {e}")
+
+    async def broadcast_message(self, gathering_id: UUID, json_message: str) -> None:
+        connections = self.local_connections[gathering_id]
+        disconnected_connections = []
+
+        for websocket in connections:
+            try:
+                await websocket.send_text(json_message)
+            except Exception as e:
+                logger.error(f"Error sending message to WebSocket: {e}")
+                disconnected_connections.append(websocket)
+
+        for websocket in disconnected_connections:
+            connections.remove(websocket)

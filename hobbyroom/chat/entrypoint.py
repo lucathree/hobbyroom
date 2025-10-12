@@ -31,5 +31,3 @@ async def chat_endpoint(
             await connection_manager.receive_message(websocket, connection_info)
     except Exception:
         await connection_manager.disconnect(websocket, connection_info)
-    finally:
-        connection_manager.refresh_connections()
