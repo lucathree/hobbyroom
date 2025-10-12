@@ -1,9 +1,14 @@
 from uuid import UUID
 
 from redis.asyncio import Redis
+from redis.asyncio.client import PubSub
+
+from hobbyroom.logging import get_logger
+
+logger = get_logger()
 
 
-class RedisConnectionInfoRepository:
+class RedisConnectionRepository:
     def __init__(self, redis_client: Redis):
         self.redis_client = redis_client
 
@@ -37,3 +42,11 @@ class RedisConnectionInfoRepository:
             self._connection_namespace(gathering_id, persona_id)
         )
         return int(count) if count else 0
+
+    def get_pubsub(self) -> PubSub:
+        return self.redis_client.pubsub()
+
+    async def publish_message(self, gathering_id: UUID, json_message: str) -> None:
+        channel_name = f"chat:gathering:{gathering_id}"
+        await self.redis_client.publish(channel=channel_name, message=json_message)
+        logger.info(f"Published message to {channel_name}: {json_message}")
