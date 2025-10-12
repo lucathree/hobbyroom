@@ -1,4 +1,5 @@
 import http
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
@@ -18,6 +19,7 @@ def create_app() -> FastAPI:
         title="Hobbyroom API",
         description="취미모임 프로젝트 API 서버",
         version="0.1.0",
+        lifespan=lifespan,
     )
     inject_dependencies(_app)
     add_routers(_app)
@@ -78,6 +80,16 @@ def add_docs_routes(_app: FastAPI) -> None:
     )
     async def openapi():
         return get_openapi(title=_app.title, version=_app.version, routes=_app.routes)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    connection_manager = app.container.chat.service.connection_manager()
+    await connection_manager.start()
+
+    yield
+
+    await connection_manager.stop()
 
 
 app = create_app()

@@ -8,6 +8,12 @@ class Settings(BaseSettings):
     db_name: str
     db_url: str
 
+    redis_host: str
+    redis_port: int
+    redis_password: str
+    redis_db: int = 0
+    max_redis_connections: int = 10
+
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 60
@@ -21,6 +27,10 @@ class Settings(BaseSettings):
     @property
     def jwt_expiration_timedelta(self) -> pendulum.Duration:
         return pendulum.Duration(minutes=self.jwt_expiration_minutes)
+
+    @property
+    def redis_url(self) -> str:
+        return f"redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/{self.redis_db}"
 
 
 settings = Settings()
