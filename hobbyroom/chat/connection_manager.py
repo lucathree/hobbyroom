@@ -150,7 +150,7 @@ class ConnectionManager:
 
         for websocket in connections:
             try:
-                await websocket.send_json(json_message)
+                await websocket.send_text(json_message)
             except Exception as e:
                 logger.error(f"Error sending message to WebSocket: {e}")
                 disconnected_connections.append(websocket)
